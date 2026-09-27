@@ -1,0 +1,98 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+enum Role { CONTRIBUTOR VALIDATOR RESEARCHER EXPERT ADMIN SUPER_ADMIN }
+enum ContributionStatus { DRAFT QUEUED SUBMITTED UNDER_REVIEW NEEDS_CORRECTION EXPERT_REVIEW VALIDATED REJECTED DUPLICATE ARCHIVED REVISION_PENDING }
+
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  username String? @unique
+  displayName String?
+  avatarUrl String?
+  role Role @default(CONTRIBUTOR)
+  status String @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  profile Profile?
+  contributions Contribution[]
+  validationRecords ValidationRecord[]
+}
+
+model Profile {
+  id String @id @default(cuid())
+  userId String @unique
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  bio String?
+  dialect String?
+  region String?
+  district String?
+  village String?
+  languages Json?
+  contributorType String?
+  profileVisibility Json?
+  audioConsent Boolean @default(false)
+  datasetLicense String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Contribution {
+  id String @id @default(cuid())
+  clientId String @unique
+  userId String
+  user User @relation(fields:[userId],references:[id])
+  type String
+  status ContributionStatus @default(DRAFT)
+  title String?
+  originalText String?
+  normalizedText String?
+  transliteration String?
+  englishTranslation String?
+  urduTranslation String?
+  dialect String?
+  region String?
+  sourceType String?
+  sourceDescription String?
+  license String?
+  aiAssisted Boolean @default(false)
+  aiAssistanceDescription String?
+  submittedAt DateTime?
+  validatedAt DateTime?
+  validatedBy String?
+  rejectionReason String?
+  correctionNote String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  validationRecords ValidationRecord[]
+  audioItems AudioItem[]
+  @@index([userId,type,status,createdAt])
+  @@index([dialect,region])
+  @@index([normalizedText])
+}
+
+model AudioItem {
+  id String @id @default(cuid())
+  contributionId String
+  contribution Contribution @relation(fields:[contributionId],references:[id],onDelete:Cascade)
+  storageKey String
+  mimeType String
+  durationSeconds Int?
+  sizeBytes BigInt?
+  checksum String?
+  storageStatus String @default("PENDING")
+  createdAt DateTime @default(now())
+  @@index([contributionId])
+}
+
+model ValidationRecord {
+  id String @id @default(cuid())
+  contributionId String
+  contribution Contribution @relation(fields:[contributionId],references:[id],onDelete:Cascade)
+  validatorId String
+  validator User @relation(fields:[validatorId],references:[id])
+  decision String
+  notes String?
+  createdAt DateTime @default(now())
+  @@index([contributionId,validatorId])
+}
