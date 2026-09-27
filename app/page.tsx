@@ -10,7 +10,7 @@ export default function Home() {
       <nav className="nav">
         <div className="brand"><span className="mark">KD</span><span>Khowar Dataset</span></div>
         <div className="navLinks">
-          <a href="#mission">Mission</a><a href="#dataset">Dataset</a><a href="#contribute">Contribute</a><a href="#about">About</a>
+          <a href="#mission">Mission</a><a href="#dataset">Dataset</a><a href="#contribute">Contribute</a><a href="#about">About</a><a href="/login">Sign in</a>
         </div>
         <a className="button buttonSmall" href="#contribute">Contribute</a>
       </nav>
