@@ -14,10 +14,22 @@ export async function POST(_: Request, context: { params: Promise<{ id: string }
     return NextResponse.json({ error: "This contribution is not ready for submission." }, { status: 409 });
   }
 
-  const updated = await prisma.contribution.update({
-    where: { id },
-    data: { status: "SUBMITTED", submittedAt: new Date(), rejectionReason: null, correctionNote: null },
-    select: { id: true, status: true, submittedAt: true },
+  const updated = await prisma.$transaction(async tx => {
+    const result = await tx.contribution.update({
+      where: { id },
+      data: { status: "SUBMITTED", submittedAt: new Date(), rejectionReason: null, correctionNote: null },
+      select: { id: true, status: true, submittedAt: true },
+    });
+    await tx.auditLog.create({
+      data: {
+        actorId: user.id,
+        action: "CONTRIBUTION_SUBMITTED",
+        targetType: "Contribution",
+        targetId: id,
+        metadata: { previousStatus: item.status },
+      },
+    });
+    return result;
   });
   return NextResponse.json({ contribution: updated });
 }
