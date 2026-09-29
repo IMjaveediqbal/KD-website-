@@ -13,7 +13,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
-  const { id, audioId } = await context.params;
+  const { audioId } = await context.params;
   const audio = await prisma.audioItem.findUnique({
     where: { id: audioId },
     include: { contribution: { select: { userId: true } } },
@@ -27,12 +27,12 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const stored = await headStoredObject(audio.storageKey);
     const actualSize = stored.ContentLength ?? 0;
     if (actualSize <= 0 || actualSize !== Number(audio.sizeBytes ?? -1)) {
-      await prisma.audioItem.update({ where: { id }, data: { storageStatus: "FAILED" } });
+      await prisma.audioItem.update({ where: { id: audioId }, data: { storageStatus: "FAILED" } });
       return NextResponse.json({ error: "Uploaded audio size does not match the declared file size." }, { status: 400 });
     }
 
     const updated = await prisma.audioItem.update({
-      where: { id },
+      where: { id: audioId },
       data: {
         durationSeconds: parsed.data.durationSeconds,
         checksum: parsed.data.checksum || null,
