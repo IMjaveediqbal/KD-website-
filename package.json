@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
-    "admin:create": "node scripts/create-admin.mjs"
+    "admin:create": "node --env-file=.env scripts/create-admin.mjs"
   },
   "dependencies": {
     "@prisma/client": "latest",
