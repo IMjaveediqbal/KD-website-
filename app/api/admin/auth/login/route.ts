@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { compare, hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { createAdminSession } from "@/lib/admin-auth";
+import { createAdminSession, hasTrustedAdminOrigin } from "@/lib/admin-auth";
 import { adminLoginSchema } from "@/lib/admin-validation";
 
 const WINDOW_MS = 15 * 60 * 1000;
@@ -11,17 +11,16 @@ const DUMMY_PASSWORD_HASH = hash("not-a-real-admin-password", 12);
 
 function throttleKey(email: string, clientAddress: string) {
   const secret = process.env.AUTH_SECRET;
-  if (!secret) throw new Error("AUTH_SECRET is required.");
+  if (!secret || Buffer.byteLength(secret) < 32) throw new Error("AUTH_SECRET must contain at least 32 bytes.");
   return createHash("sha256").update(`${secret}:${email}:${clientAddress}`).digest("hex");
 }
 
 export async function POST(request: Request) {
   try {
-    const appBaseUrl = process.env.APP_BASE_URL;
-    if (!appBaseUrl) return NextResponse.json({ error: "Authentication is not configured." }, { status: 500 });
-
-    const origin = request.headers.get("origin");
-    if (!origin || new URL(origin).origin !== new URL(appBaseUrl).origin) {
+    if (!process.env.APP_BASE_URL) {
+      return NextResponse.json({ error: "Authentication is not configured." }, { status: 500 });
+    }
+    if (!hasTrustedAdminOrigin(request)) {
       return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
     }
 
