@@ -35,6 +35,7 @@ Start here:
 - [ADR 0001: Modular monolith](docs/decisions/0001-modular-monolith.md)
 - [ADR 0002: Identity and admin boundaries](docs/decisions/0002-identity-and-admin-boundaries.md)
 - [Implementation roadmap](docs/product/implementation-roadmap.md)
+- [Administrator provisioning and security](docs/operations/admin-provisioning.md)
 
 ## Current product direction
 
@@ -47,4 +48,4 @@ Start here:
 
 ## Status
 
-Architecture baseline established. Implementation proceeds incrementally, with security, data integrity, tests, and operational readiness treated as part of each feature.
+Architecture baseline established. Separate administrator identity, sessions, login/logout endpoints, and a protected admin shell are implemented on the development branch. Database migration and local administrator provisioning are documented. Runtime build and database migration checks remain to be run in the project environment.
