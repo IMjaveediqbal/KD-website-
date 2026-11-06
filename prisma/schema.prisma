@@ -1,129 +1,202 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+generator client {
+  provider = "prisma-client-js"
+}
 
-enum Role { CONTRIBUTOR VALIDATOR RESEARCHER EXPERT ADMIN SUPER_ADMIN }
-enum UserStatus { ACTIVE SUSPENDED DEACTIVATED }
-enum ContributionStatus { DRAFT QUEUED SUBMITTED UNDER_REVIEW NEEDS_CORRECTION EXPERT_REVIEW VALIDATED REJECTED DUPLICATE ARCHIVED REVISION_PENDING }
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CONTRIBUTOR
+  VALIDATOR
+  RESEARCHER
+  EXPERT
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum AdminStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum ContributionStatus {
+  DRAFT
+  QUEUED
+  SUBMITTED
+  UNDER_REVIEW
+  NEEDS_CORRECTION
+  EXPERT_REVIEW
+  VALIDATED
+  REJECTED
+  DUPLICATE
+  ARCHIVED
+  REVISION_PENDING
+}
 
 model User {
-  id String @id @default(cuid())
-  email String @unique
-  passwordHash String?
-  username String? @unique
-  displayName String?
-  avatarUrl String?
-  role Role @default(CONTRIBUTOR)
-  status UserStatus @default(ACTIVE)
-  emailVerifiedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  profile Profile?
-  contributions Contribution[]
+  id                String              @id @default(cuid())
+  email             String              @unique
+  passwordHash      String?
+  username          String?             @unique
+  displayName       String?
+  avatarUrl         String?
+  role              Role                @default(CONTRIBUTOR)
+  status            UserStatus          @default(ACTIVE)
+  emailVerifiedAt   DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  profile           Profile?
+  contributions     Contribution[]
   validationRecords ValidationRecord[]
-  sessions Session[]
-  auditLogs AuditLog[] @relation("AuditActor")
+  sessions          Session[]
+  auditLogs         AuditLog[]          @relation("AuditActor")
+}
+
+model AdminAccount {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  displayName  String?
+  status       AdminStatus   @default(ACTIVE)
+  lastLoginAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  sessions     AdminSession[]
+  auditLogs    AdminAuditLog[]
+}
+
+model AdminSession {
+  id        String       @id @default(cuid())
+  tokenHash String       @unique
+  adminId   String
+  admin     AdminAccount @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+  revokedAt DateTime?
+  @@index([adminId, expiresAt])
+}
+
+model AdminAuditLog {
+  id         String       @id @default(cuid())
+  adminId    String
+  admin      AdminAccount @relation(fields: [adminId], references: [id], onDelete: Restrict)
+  action     String
+  targetType String
+  targetId   String?
+  metadata   Json?
+  createdAt  DateTime     @default(now())
+  @@index([adminId, createdAt])
+  @@index([targetType, targetId, createdAt])
 }
 
 model Profile {
-  id String @id @default(cuid())
-  userId String @unique
-  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
-  bio String?
-  preferredUiLanguage String @default("en")
-  dialect String?
-  region String?
-  district String?
-  village String?
-  languages Json?
-  contributorType String?
-  profileVisibility Json?
-  audioConsent Boolean @default(false)
-  researchConsent Boolean @default(false)
-  modelTrainingConsent Boolean @default(false)
-  datasetLicense String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio                  String?
+  preferredUiLanguage  String   @default("en")
+  dialect              String?
+  region               String?
+  district             String?
+  village              String?
+  languages            Json?
+  contributorType      String?
+  profileVisibility    Json?
+  audioConsent         Boolean  @default(false)
+  researchConsent      Boolean  @default(false)
+  modelTrainingConsent Boolean  @default(false)
+  datasetLicense       String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }
 
 model Session {
-  id String @id @default(cuid())
-  tokenHash String @unique
-  userId String
-  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
-  @@index([userId,expiresAt])
+  @@index([userId, expiresAt])
 }
 
 model Contribution {
-  id String @id @default(cuid())
-  clientId String @unique
-  userId String
-  user User @relation(fields:[userId],references:[id])
-  type String
-  status ContributionStatus @default(DRAFT)
-  title String?
-  originalText String?
-  normalizedText String?
-  transliteration String?
-  englishTranslation String?
-  urduTranslation String?
-  dialect String?
-  region String?
-  sourceType String?
-  sourceDescription String?
-  license String?
-  aiAssisted Boolean @default(false)
+  id                      String              @id @default(cuid())
+  clientId                String              @unique
+  userId                  String
+  user                    User                @relation(fields: [userId], references: [id])
+  type                    String
+  status                  ContributionStatus  @default(DRAFT)
+  title                   String?
+  originalText            String?
+  normalizedText          String?
+  transliteration         String?
+  englishTranslation      String?
+  urduTranslation         String?
+  dialect                 String?
+  region                  String?
+  sourceType              String?
+  sourceDescription       String?
+  license                 String?
+  aiAssisted              Boolean             @default(false)
   aiAssistanceDescription String?
-  submittedAt DateTime?
-  validatedAt DateTime?
-  validatedBy String?
-  rejectionReason String?
-  correctionNote String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  validationRecords ValidationRecord[]
-  audioItems AudioItem[]
-  @@index([userId,type,status,createdAt])
-  @@index([dialect,region])
+  submittedAt             DateTime?
+  validatedAt             DateTime?
+  validatedBy             String?
+  rejectionReason         String?
+  correctionNote          String?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  validationRecords       ValidationRecord[]
+  audioItems              AudioItem[]
+  @@index([userId, type, status, createdAt])
+  @@index([dialect, region])
   @@index([normalizedText])
 }
 
 model AudioItem {
-  id String @id @default(cuid())
-  contributionId String
-  contribution Contribution @relation(fields:[contributionId],references:[id],onDelete:Cascade)
-  storageKey String
-  mimeType String
+  id              String       @id @default(cuid())
+  contributionId  String
+  contribution    Contribution @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+  storageKey      String
+  mimeType        String
   durationSeconds Int?
-  sizeBytes BigInt?
-  checksum String?
-  storageStatus String @default("PENDING")
-  createdAt DateTime @default(now())
+  sizeBytes       BigInt?
+  checksum        String?
+  storageStatus   String       @default("PENDING")
+  createdAt       DateTime     @default(now())
   @@index([contributionId])
 }
 
 model ValidationRecord {
-  id String @id @default(cuid())
+  id             String       @id @default(cuid())
   contributionId String
-  contribution Contribution @relation(fields:[contributionId],references:[id],onDelete:Cascade)
-  validatorId String
-  validator User @relation(fields:[validatorId],references:[id])
-  decision String
-  notes String?
-  createdAt DateTime @default(now())
-  @@index([contributionId,validatorId])
+  contribution   Contribution @relation(fields: [contributionId], references: [id], onDelete: Cascade)
+  validatorId    String
+  validator      User         @relation(fields: [validatorId], references: [id])
+  decision       String
+  notes          String?
+  createdAt      DateTime     @default(now())
+  @@index([contributionId, validatorId])
 }
 
 model AuditLog {
-  id String @id @default(cuid())
-  actorId String?
-  actor User? @relation("AuditActor",fields:[actorId],references:[id],onDelete:SetNull)
-  action String
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
   targetType String
-  targetId String?
-  metadata Json?
-  createdAt DateTime @default(now())
-  @@index([actorId,createdAt])
-  @@index([targetType,targetId,createdAt])
+  targetId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId, createdAt])
 }
