@@ -72,3 +72,14 @@ export async function requireAdmin() {
   if (!admin) throw new Error("ADMIN_UNAUTHENTICATED");
   return admin;
 }
+
+export function hasTrustedAdminOrigin(request: Request) {
+  const appBaseUrl = process.env.APP_BASE_URL;
+  const origin = request.headers.get("origin");
+  if (!appBaseUrl || !origin) return false;
+  try {
+    return new URL(origin).origin === new URL(appBaseUrl).origin;
+  } catch {
+    return false;
+  }
+}
