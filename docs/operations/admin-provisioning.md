@@ -53,7 +53,7 @@ Administrator accounts are intentionally separate from public contributor accoun
 - The browser cookie is HttpOnly, SameSite=Strict, expires after eight hours, and is Secure in production.
 - Disabled administrators and revoked or expired sessions are rejected server-side.
 - Failed attempts are throttled persistently by a keyed email-and-client-address identifier.
-- The login endpoint checks the request Origin when the header is present. Keep `APP_BASE_URL` exact and configure the hosting proxy to set trusted client-address headers.
+- Admin login and logout require a matching request Origin. Keep `APP_BASE_URL` exact and configure the hosting proxy to set trusted client-address headers.
 - Login and logout events are written to the administrator audit log.
 - Every future admin API must authenticate with `getCurrentAdmin()` / `requireAdmin()`; hiding a link or protecting only a page is not authorization.
 
