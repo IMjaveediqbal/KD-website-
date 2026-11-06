@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     if (!appBaseUrl) return NextResponse.json({ error: "Authentication is not configured." }, { status: 500 });
 
     const origin = request.headers.get("origin");
-    if (origin && new URL(origin).origin !== new URL(appBaseUrl).origin) {
+    if (!origin || new URL(origin).origin !== new URL(appBaseUrl).origin) {
       return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
     }
 
