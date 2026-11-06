@@ -84,6 +84,15 @@ model AdminSession {
   @@index([adminId, expiresAt])
 }
 
+model AdminLoginThrottle {
+  id              String   @id @default(cuid())
+  identifierHash  String   @unique
+  failures        Int      @default(0)
+  windowStartedAt DateTime @default(now())
+  blockedUntil    DateTime?
+  updatedAt       DateTime @updatedAt
+}
+
 model AdminAuditLog {
   id         String       @id @default(cuid())
   adminId    String
