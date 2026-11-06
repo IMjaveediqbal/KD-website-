@@ -4,7 +4,7 @@ Administrator accounts are intentionally separate from public contributor accoun
 
 ## First-time setup
 
-1. Configure `DATABASE_URL`, `AUTH_SECRET` (a cryptographically random secret of at least 32 bytes), and `APP_BASE_URL` in the deployment environment.
+1. Configure `DATABASE_URL`, `AUTH_SECRET` (a cryptographically random secret of at least 32 bytes), and `APP_BASE_URL` in the deployment environment. For local development, copy `.env.example` to `.env` and set real local values. Never commit `.env`.
 2. Install dependencies and generate the Prisma client:
 
    ```bash
@@ -24,7 +24,7 @@ Administrator accounts are intentionally separate from public contributor accoun
 
    ```bash
    export ADMIN_EMAIL="admin@example.org"
-   read -s ADMIN_PASSWORD
+   read -s -p "Administrator password: " ADMIN_PASSWORD; echo
    export ADMIN_PASSWORD
    npm run admin:create
    unset ADMIN_EMAIL ADMIN_PASSWORD
@@ -34,8 +34,8 @@ Administrator accounts are intentionally separate from public contributor accoun
 
    ```powershell
    $env:ADMIN_EMAIL = "admin@example.org"
-   $env:ADMIN_PASSWORD = Read-Host "Enter a strong administrator password" -AsSecureString
-   $BSTR = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($env:ADMIN_PASSWORD)
+   $secure = Read-Host "Administrator password" -AsSecureString
+   $BSTR = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
    $env:ADMIN_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($BSTR)
    npm run admin:create
    Remove-Item Env:ADMIN_EMAIL, Env:ADMIN_PASSWORD
