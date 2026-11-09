@@ -27,3 +27,36 @@ test("admin login throttle atomically blocks after five concurrent failures", { 
     await prisma.adminLoginThrottle.deleteMany({ where: { identifierHash } });
   }
 });
+
+test("admin login throttle keeps an active block and resets after its window", { skip: !shouldRun }, async () => {
+  const identifierHash = randomUUID().replaceAll("-", "").padEnd(64, "b");
+  const now = new Date("2026-11-09T13:00:00.000Z");
+  const blockEnd = new Date(now.getTime() + 15 * 60 * 1000);
+
+  try {
+    const attempts = [];
+    for (let index = 0; index < 5; index += 1) {
+      attempts.push(await recordAdminLoginFailure(identifierHash, now));
+    }
+
+    assert.equal(attempts.filter((result) => result.blockedUntil === null).length, 4);
+    assert.equal(attempts[4]?.blockedUntil?.toISOString(), blockEnd.toISOString());
+
+    const stillBlocked = await recordAdminLoginFailure(identifierHash, new Date(now.getTime() + 60_000));
+    assert.equal(stillBlocked.blockedUntil?.toISOString(), blockEnd.toISOString());
+
+    const afterWindow = await recordAdminLoginFailure(
+      identifierHash,
+      new Date(now.getTime() + 15 * 60 * 1000 + 1),
+    );
+    assert.equal(afterWindow.blockedUntil, null);
+
+    const stored = await prisma.adminLoginThrottle.findUnique({
+      where: { identifierHash },
+    });
+    assert.equal(stored?.failures, 1);
+    assert.equal(stored?.blockedUntil, null);
+  } finally {
+    await prisma.adminLoginThrottle.deleteMany({ where: { identifierHash } });
+  }
+});
