@@ -2,24 +2,27 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import type { Prisma, ContributionStatus } from "@prisma/client";
 import ModerationActions from "./moderation-actions";
 
 export const dynamic = "force-dynamic";
 
 type Props = { searchParams: Promise<{ status?: string; page?: string }> };
-const reviewableStatuses = ["SUBMITTED", "UNDER_REVIEW", "EXPERT_REVIEW"];
+const reviewableStatuses: ContributionStatus[] = ["SUBMITTED", "UNDER_REVIEW", "EXPERT_REVIEW"];
+const allowedFilters: Array<ContributionStatus | "REVIEW" | "ALL"> = ["REVIEW", "ALL", "DRAFT", "QUEUED", "SUBMITTED", "UNDER_REVIEW", "NEEDS_CORRECTION", "EXPERT_REVIEW", "VALIDATED", "REJECTED", "DUPLICATE", "ARCHIVED", "REVISION_PENDING"];
 
 export default async function AdminContributionsPage({ searchParams }: Props) {
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/login");
 
   const params = await searchParams;
-  const requestedStatus = params.status || "REVIEW";
+  const rawStatus = params.status || "REVIEW";
+  const requestedStatus = allowedFilters.includes(rawStatus as ContributionStatus | "REVIEW" | "ALL") ? rawStatus as ContributionStatus | "REVIEW" | "ALL" : "REVIEW";
   const page = Math.max(1, Number.parseInt(params.page || "1", 10) || 1);
   const pageSize = 15;
-  const where = requestedStatus === "ALL" ? {} : requestedStatus === "REVIEW"
+  const where: Prisma.ContributionWhereInput = requestedStatus === "ALL" ? {} : requestedStatus === "REVIEW"
     ? { status: { in: reviewableStatuses } }
-    : { status: requestedStatus as "DRAFT" | "QUEUED" | "SUBMITTED" | "UNDER_REVIEW" | "NEEDS_CORRECTION" | "EXPERT_REVIEW" | "VALIDATED" | "REJECTED" | "DUPLICATE" | "ARCHIVED" | "REVISION_PENDING" };
+    : { status: requestedStatus };
 
   const [total, items] = await Promise.all([
     prisma.contribution.count({ where }),
@@ -65,7 +68,7 @@ export default async function AdminContributionsPage({ searchParams }: Props) {
               <div className="reviewMeta"><span>Contributor: {item.user.displayName || item.user.username || item.user.email}</span><span>{item.dialect || "Dialect not specified"}</span><span>{item.region || "Region not specified"}</span></div>
               <div className="reviewMeta"><span>Source: {item.sourceType || "Not specified"}</span><span>License: {item.license || "Not specified"}</span><span>AI assisted: {item.aiAssisted ? "Yes" : "No"}</span></div>
               {item.audioItems.length > 0 && <div className="reviewMeta">{item.audioItems.map((audio) => <span key={audio.id}>Audio · {audio.mimeType} · {audio.durationSeconds ?? "?"} sec · {audio.storageStatus}</span>)}</div>}
-              {reviewableStatuses.includes(item.status) && <ModerationActions id={item.id} currentStatus={item.status} />}
+              {reviewableStatuses.some((status) => status === item.status) && <ModerationActions id={item.id} currentStatus={item.status} />}
             </article>
           ))}
         </div>
