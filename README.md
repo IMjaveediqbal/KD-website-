@@ -49,4 +49,4 @@ Start here:
 
 ## Status
 
-Architecture baseline established on the development branch. Separate administrator identity, protected admin tools, and public account workspaces are implemented. Prisma ORM 7.10.1 is pinned with the PostgreSQL driver adapter. Runtime build, database migration, and production-storage checks remain pending.
+Architecture baseline established on the development branch. Separate administrator identity, protected admin tools, and public account workspaces are implemented. Prisma ORM 7.10.1 is pinned with the PostgreSQL driver adapter. GitHub Actions currently verifies Prisma generation/schema validation, fresh PostgreSQL migrations, regression tests, TypeScript typechecking, and the Next.js production build. Production storage, backup/restore, deployment configuration, and full account-lifecycle tests remain pending.
