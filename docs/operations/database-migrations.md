@@ -4,7 +4,9 @@ KDW uses Prisma ORM 7.10.1 with the PostgreSQL driver adapter and Prisma Migrate
 
 ## Continuous integration
 
-The CI workflow supplies a disposable placeholder `DATABASE_URL` and a non-production `AUTH_SECRET` so Prisma Client generation and schema validation can run without connecting to a real database. These values must never be reused in deployed environments.
+The CI workflow starts a disposable PostgreSQL 16 service, applies every repository migration with `prisma migrate deploy`, runs the regression suite (including a concurrent database-backed rate-limit test), validates Prisma, typechecks TypeScript, and builds the Next.js application. Its `DATABASE_URL` and `AUTH_SECRET` are CI-only values and must never be reused in deployed environments.
+
+Run the regression suite locally with `npm test`. The database-backed rate-limit integration test is skipped unless `RUN_DB_TESTS=true` is set and a migrated PostgreSQL database is available.
 
 ## Fresh database
 
