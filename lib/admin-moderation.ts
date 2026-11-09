@@ -3,7 +3,7 @@ import {
   buildModerationUpdate,
   isContributionReviewable,
   type ModerationDecision,
-} from "@/lib/admin-policy";
+} from "./admin-policy";
 
 const reviewableStatuses: ContributionStatus[] = ["SUBMITTED", "UNDER_REVIEW", "EXPERT_REVIEW"];
 
