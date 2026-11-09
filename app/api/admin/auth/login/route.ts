@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
+import { createAdminSession } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
 import { compare, hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
