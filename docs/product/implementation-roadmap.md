@@ -40,7 +40,7 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 - [x] Add server-side admin session verification and revocation.
 - [x] Add database-backed administrator session lifecycle coverage for active, expired, revoked, and disabled-account sessions; verify idempotent logout revocation and that audit failures cannot undo revocation.
 - [x] Add atomic database-backed failed-login throttling for administrator password sign-in, with concurrent-attempt regression coverage.
-- [ ] Extend persistent rate limiting to every privileged endpoint and add security monitoring before production. (Moderation, user-status, and audio playback endpoints are covered.)
+- [ ] Extend persistent rate limiting to every privileged endpoint and add security monitoring before production. (Admin moderation, user-status, audio playback, and legacy review-queue/moderation endpoints are covered.)
 - [x] Build an admin overview using live database counts only.
 - [x] Add searchable admin user directory with audited suspend/restore actions and session revocation.
 - [x] Add a protected contribution review queue with validate, return-for-correction, reject, and duplicate decisions.
@@ -50,6 +50,7 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 
 ## Phase 3 — Dataset operations
 
+- [x] Decide the source-submission versus curated-record boundary, immutable revision approach, provenance/consent evidence, and additive migration strategy (ADR 0003).
 - [ ] Establish canonical vocabulary, corpus, and audio domain models.
 - [ ] Separate original submissions from curated records.
 - [ ] Implement draft, submit, review, correction, validation, and archive workflows.
