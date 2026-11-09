@@ -8,7 +8,7 @@ type User = {
   profile?: { dialect: string | null; region: string | null } | null;
 };
 
-type Contribution = { id: string; type: string; status: string; originalText: string | null; createdAt: string };
+type Contribution = { id: string; type: string; status: string; originalText: string | null; correctionNote?: string | null; rejectionReason?: string | null; createdAt: string };
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -43,7 +43,7 @@ export default function DashboardPage() {
         <article className="dashboardCard"><span>Validated</span><strong>{items.filter(x => x.status === "VALIDATED").length}</strong><small>From real database records</small></article>
         <article className="dashboardCard"><span>In review</span><strong>{items.filter(x => ["SUBMITTED","UNDER_REVIEW","EXPERT_REVIEW"].includes(x.status)).length}</strong><small>Awaiting review</small></article>
       </section>
-      <section className="dashboardSection"><div className="sectionHeading"><h2>Recent contributions</h2><Link href="/contribute">Add another</Link></div>{items.length === 0 ? <div className="emptyState">No contributions yet. Your first Khowar record can start here.</div> : <div className="contributionList">{items.map(item => <div className="contributionRow" key={item.id}><div><b>{item.type}</b><p>{item.originalText || "Draft without text"}</p></div><span className={"status status-"+item.status.toLowerCase()}>{item.status.replaceAll("_"," ")}</span></div>)}</div>}</section>
+      <section className="dashboardSection"><div className="sectionHeading"><h2>Recent contributions</h2><Link href="/contribute">Add another</Link></div>{items.length === 0 ? <div className="emptyState">No contributions yet. Your first Khowar record can start here.</div> : <div className="contributionList">{items.map(item => <div className="contributionRow" key={item.id}><div><b>{item.type}</b><p>{item.originalText || "Draft without text"}</p>{(item.correctionNote || item.rejectionReason) && <p className="reviewFeedback">Reviewer note: {item.correctionNote || item.rejectionReason}</p>}</div><span className={"status status-"+item.status.toLowerCase()}>{item.status.replaceAll("_"," ")}</span></div>)}</div>}</section>
     </main>
   );
 }
