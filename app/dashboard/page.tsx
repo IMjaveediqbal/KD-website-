@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 type User = {
-  id: string; email: string; displayName: string | null; username: string | null; role: string;
+  id: string; email: string; displayName: string | null; username: string | null;
   profile?: { dialect: string | null; region: string | null } | null;
 };
 
@@ -34,7 +34,7 @@ export default function DashboardPage() {
   return (
     <main className="pageShell">
       <header className="dashboardHeader">
-        <div><div className="sectionLabel">CONTRIBUTOR WORKSPACE</div><h1>Welcome, {user.displayName ?? user.username ?? "Contributor"}.</h1><p>{user.profile?.region || "Your contributions"} · {user.role}</p></div>
+        <div><div className="sectionLabel">CONTRIBUTOR WORKSPACE</div><h1>Welcome, {user.displayName ?? user.username ?? "Contributor"}.</h1><p>{user.profile?.region || "Your contributions"}</p></div>
         <div className="dashboardActions"><Link className="button" href="/contribute">New contribution</Link><Link className="button buttonGhost" href="/profile">Profile</Link><button className="button buttonGhost" onClick={logout}>Sign out</button></div>
       </header>
       {error && <div className="errorBox">{error}</div>}
