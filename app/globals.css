@@ -6,3 +6,5 @@
 .adminStatusText{font-size:clamp(20px,2.5vw,28px)!important;letter-spacing:-.03em;color:#138878}.adminWorkspaceNote{max-width:850px;line-height:1.8;color:#5f7076}
 
 .moderationPanel{margin-top:24px;padding-top:20px;border-top:1px solid #e2e9e6}.moderationNote{display:grid;gap:8px;max-width:700px;font-size:13px;font-weight:700;color:#30434b}.moderationNote textarea{width:100%;font:inherit;line-height:1.6;border:1px solid #cbd8d5;border-radius:9px;padding:12px;background:#fff;resize:vertical}.moderationPanel .reviewActions{margin-top:14px}.userStatusActions{margin-top:18px}.userStatusActions .errorBox{margin-top:10px}.userStatusActions button{cursor:pointer}
+
+.reviewFeedback{font-size:13px;color:#9a5a35!important;white-space:normal!important;overflow:visible!important}
