@@ -36,6 +36,7 @@ Start here:
 - [ADR 0002: Identity and admin boundaries](docs/decisions/0002-identity-and-admin-boundaries.md)
 - [Implementation roadmap](docs/product/implementation-roadmap.md)
 - [Administrator provisioning and security](docs/operations/admin-provisioning.md)
+- [Database migrations and deployment](docs/operations/database-migrations.md)
 
 ## Current product direction
 
@@ -48,4 +49,4 @@ Start here:
 
 ## Status
 
-Architecture baseline established. Separate administrator identity, sessions, login/logout endpoints, and a protected admin shell are implemented on the development branch. Database migration and local administrator provisioning are documented. Runtime build and database migration checks remain to be run in the project environment.
+Architecture baseline established. Separate administrator identity, sessions, login/logout endpoints, and a protected admin shell are implemented on the development branch. Initial core-schema and administrator migrations, database migration guidance, and local administrator provisioning are documented. Runtime build and database migration checks remain to be run in the project environment.
