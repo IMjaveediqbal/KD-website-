@@ -91,6 +91,7 @@ model AdminLoginThrottle {
   windowStartedAt DateTime @default(now())
   blockedUntil    DateTime?
   updatedAt       DateTime @updatedAt
+  @@index([windowStartedAt])
 }
 
 model AdminAuditLog {
