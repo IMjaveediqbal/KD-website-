@@ -23,7 +23,7 @@ export const profileSchema = z.object({
   village: z.string().trim().max(120).optional().nullable(),
   languages: z.array(z.string().trim().max(80)).max(20).optional(),
   contributorType: z.string().trim().max(120).optional().nullable(),
-  profileVisibility: z.record(z.boolean()).optional(),
+  profileVisibility: z.record(z.string(), z.boolean()).optional(),
   audioConsent: z.boolean().optional(),
   researchConsent: z.boolean().optional(),
   modelTrainingConsent: z.boolean().optional(),
