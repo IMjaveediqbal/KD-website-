@@ -1,16 +1,23 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
-const allowed = new Set(["VALIDATOR","EXPERT","ADMIN","SUPER_ADMIN"]);
+const reviewableStatuses = ["SUBMITTED", "UNDER_REVIEW", "EXPERT_REVIEW"] as const;
 
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user || !allowed.has(user.role)) return NextResponse.json({ error: "Validator access required." }, { status: 403 });
+  const admin = await getCurrentAdmin();
+  if (!admin) return NextResponse.json({ error: "Administrator authentication required." }, { status: 401 });
+
   const items = await prisma.contribution.findMany({
-    where: { status: { in: ["SUBMITTED","UNDER_REVIEW","EXPERT_REVIEW"] } },
-    orderBy: { submittedAt: "asc" }, take: 50,
-    include: { user: { select: { id:true, displayName:true, username:true } }, audioItems: true },
+    where: { status: { in: [...reviewableStatuses] } },
+    orderBy: { submittedAt: "asc" },
+    take: 50,
+    select: {
+      id: true, type: true, status: true, title: true, originalText: true,
+      normalizedText: true, dialect: true, region: true, submittedAt: true,
+      user: { select: { id: true, displayName: true, username: true } },
+      audioItems: { select: { id: true, mimeType: true, durationSeconds: true, storageStatus: true } },
+    },
   });
   return NextResponse.json({ items });
 }
