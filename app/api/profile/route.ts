@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { profileSchema } from "@/lib/validation";
 
 export async function GET() {
+  if (!hasTrustedRequestOrigin(request)) return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   return NextResponse.json({ user });
