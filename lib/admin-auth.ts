@@ -93,7 +93,12 @@ export function hasTrustedAdminOrigin(request: Request) {
   let suppliedOrigin: string;
   try {
     const parsed = new URL(originHeader);
-    if ((parsed.protocol !== "https:" && parsed.protocol !== "http:") || parsed.username || parsed.password) {
+    if (
+      (parsed.protocol !== "https:" && parsed.protocol !== "http:") ||
+      parsed.username ||
+      parsed.password ||
+      parsed.origin !== originHeader
+    ) {
       return false;
     }
     suppliedOrigin = parsed.origin;
