@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
 import { registerSchema } from "@/lib/validation";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
+import { AuthRateLimitUnavailableError, consumeAuthRateLimit } from "@/lib/auth-rate-limit";
 
 export async function POST(request: Request) {
   try {
@@ -15,6 +16,12 @@ export async function POST(request: Request) {
 
     const { email, password, displayName, username } = parsed.data;
     const normalizedEmail = email.trim().toLowerCase();
+    const ipLimit = await consumeAuthRateLimit({ scope: "register:ip", request, maxAttempts: 20, windowMs: 60 * 60 * 1000, blockMs: 60 * 60 * 1000 });
+    const identityLimit = await consumeAuthRateLimit({ scope: `register:email:${normalizedEmail}`, request, maxAttempts: 5, windowMs: 60 * 60 * 1000, blockMs: 60 * 60 * 1000 });
+    const limited = !ipLimit.allowed ? ipLimit : identityLimit;
+    if (!ipLimit.allowed || !identityLimit.allowed) {
+      return NextResponse.json({ error: "Too many registration attempts. Try again later." }, { status: 429, headers: { "Retry-After": String(limited.retryAfterSeconds) } });
+    }
     const normalizedUsername = username?.trim().toLowerCase();
     const existing = await prisma.user.findFirst({
       where: { OR: [{ email: normalizedEmail }, ...(normalizedUsername ? [{ username: normalizedUsername }] : [])] },
@@ -42,6 +49,9 @@ export async function POST(request: Request) {
     await createSession(user.id);
     return NextResponse.json({ user }, { status: 201 });
   } catch (error) {
+    if (error instanceof AuthRateLimitUnavailableError) {
+      return NextResponse.json({ error: "Sign-up is temporarily unavailable. Please try again later." }, { status: 503 });
+    }
     if (
       typeof error === "object" &&
       error !== null &&
