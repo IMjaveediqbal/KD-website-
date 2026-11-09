@@ -4,6 +4,7 @@ import { getCurrentAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import type { Prisma, ContributionStatus } from "@prisma/client";
 import ModerationActions from "./moderation-actions";
+import AdminAudioPlayer from "./audio-player";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,7 @@ export default async function AdminContributionsPage({ searchParams }: Props) {
               {item.urduTranslation && <p><b>Urdu:</b> {item.urduTranslation}</p>}
               <div className="reviewMeta"><span>Contributor: {item.user.displayName || item.user.username || item.user.email}</span><span>{item.dialect || "Dialect not specified"}</span><span>{item.region || "Region not specified"}</span></div>
               <div className="reviewMeta"><span>Source: {item.sourceType || "Not specified"}</span><span>License: {item.license || "Not specified"}</span><span>AI assisted: {item.aiAssisted ? "Yes" : "No"}</span></div>
-              {item.audioItems.length > 0 && <div className="reviewMeta">{item.audioItems.map((audio) => <span key={audio.id}>Audio · {audio.mimeType} · {audio.durationSeconds ?? "?"} sec · {audio.storageStatus}</span>)}</div>}
+              {item.audioItems.length > 0 && <div className="adminAudioList">{item.audioItems.map((audio) => <div key={audio.id}><AdminAudioPlayer audioId={audio.id} mimeType={audio.mimeType} storageStatus={audio.storageStatus} /><span className="mutedLine">{audio.durationSeconds ?? "Duration not supplied"} sec · Audio ID: {audio.id}</span></div>)}</div>}
               {reviewableStatuses.some((status) => status === item.status) && <ModerationActions id={item.id} currentStatus={item.status} />}
             </article>
           ))}
