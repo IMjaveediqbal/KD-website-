@@ -13,7 +13,7 @@
     "admin:create": "node --env-file=.env scripts/create-admin.mjs"
   },
   "dependencies": {
-    "@prisma/client": "latest",
+    "@prisma/client": "7.10.1",
     "bcryptjs": "latest",
     "jose": "latest",
     "next": "latest",
@@ -21,13 +21,18 @@
     "react-dom": "latest",
     "zod": "latest",
     "@aws-sdk/client-s3": "latest",
-    "@aws-sdk/s3-request-presigner": "latest"
+    "@aws-sdk/s3-request-presigner": "latest",
+    "@prisma/adapter-pg": "7.10.1",
+    "pg": "latest",
+    "dotenv": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "prisma": "latest",
-    "typescript": "latest"
-  }
+    "prisma": "7.10.1",
+    "typescript": "latest",
+    "@types/pg": "latest"
+  },
+  "type": "module"
 }
