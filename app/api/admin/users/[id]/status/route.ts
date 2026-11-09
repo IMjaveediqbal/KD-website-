@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { getCurrentAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import { changeUserStatus } from "@/lib/admin-user-management";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!hasTrustedRequestOrigin(request)) {
@@ -24,30 +25,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   }
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      const user = await tx.user.findUnique({
-        where: { id },
-        select: { id: true, status: true, email: true },
-      });
-      if (!user) return { kind: "missing" as const };
-      if (user.status === "DEACTIVATED") return { kind: "deactivated" as const };
-      if (user.status === status) return { kind: "unchanged" as const };
-
-      await tx.user.update({ where: { id }, data: { status } });
-      if (status === "SUSPENDED") {
-        await tx.session.deleteMany({ where: { userId: id } });
-      }
-      await tx.adminAuditLog.create({
-        data: {
-          adminId: admin.id,
-          action: status === "SUSPENDED" ? "USER_SUSPENDED" : "USER_RESTORED",
-          targetType: "User",
-          targetId: id,
-          metadata: { previousStatus: user.status, nextStatus: status, email: user.email },
-        },
-      });
-      return { kind: "updated" as const };
-    });
+    const result = await prisma.$transaction((tx) =>
+      changeUserStatus(tx, { userId: id, adminId: admin.id, status })
+    );
 
     if (result.kind === "missing") return NextResponse.json({ error: "User account not found." }, { status: 404 });
     if (result.kind === "deactivated") return NextResponse.json({ error: "Deactivated accounts cannot be changed here." }, { status: 409 });
