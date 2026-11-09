@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { createAdminSession } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
@@ -65,19 +65,13 @@ export async function POST(request: Request) {
     const valid = Boolean(admin && admin.status === "ACTIVE" && passwordMatches);
 
     if (!valid || !admin) {
-      const windowExpired =
-        !throttle || now.getTime() - throttle.windowStartedAt.getTime() >= WINDOW_MS;
-      const failures = windowExpired ? 1 : throttle.failures + 1;
-      const blockedUntil =
-        failures >= MAX_FAILURES ? new Date(now.getTime() + WINDOW_MS) : null;
-
       // Upsert is atomic for a given unique HMAC key. Concurrent failures
       // cannot overwrite one another's counter with a stale read.
       const rows = await prisma.$queryRaw<Array<{ blockedUntil: Date | null }>>`
         INSERT INTO "AdminLoginThrottle"
           ("id", "identifierHash", "failures", "windowStartedAt", "blockedUntil", "updatedAt")
         VALUES (
-          ${crypto.randomUUID()},
+          ${randomUUID()},
           ${key},
           1,
           ${now},
