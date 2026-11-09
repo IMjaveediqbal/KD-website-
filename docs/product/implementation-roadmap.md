@@ -13,7 +13,7 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 
 ## Phase 1 — Identity and workspace foundation
 
-- [x] Add shared same-origin protection to browser registration, login, and logout endpoints; support dynamic development ports and explicit production origins.
+- [x] Add shared same-origin protection to browser authentication and all current cookie-authenticated mutation endpoints; support dynamic development ports and explicit production origins.
 - [x] Normalize email addresses and usernames consistently during registration; handle concurrent duplicate-account attempts safely.
 - [x] Keep public account responses independent of internal role metadata; all ordinary accounts begin with the same access.
 - [x] Use constant-work password comparison for unknown email addresses and revoke sessions for inactive accounts.
