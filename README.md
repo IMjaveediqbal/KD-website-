@@ -49,4 +49,4 @@ Start here:
 
 ## Status
 
-Architecture baseline established. Separate administrator identity, sessions, login/logout endpoints, and a protected admin shell are implemented on the development branch. Initial core-schema and administrator migrations, database migration guidance, and local administrator provisioning are documented. Runtime build and database migration checks remain to be run in the project environment.
+Architecture baseline established on the development branch. Separate administrator identity, protected admin tools, and public account workspaces are implemented. Prisma ORM 7.10.1 is pinned with the PostgreSQL driver adapter. Runtime build, database migration, and production-storage checks remain pending.
