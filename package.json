@@ -31,7 +31,7 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "prisma": "7.10.1",
-    "typescript": "latest",
+    "typescript": "5.9.3",
     "@types/pg": "latest"
   },
   "type": "module"
