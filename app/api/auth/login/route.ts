@@ -3,9 +3,13 @@ import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
 import { loginSchema } from "@/lib/validation";
+import { hasTrustedRequestOrigin } from "@/lib/admin-auth";
 
 export async function POST(request: Request) {
   try {
+    if (!hasTrustedRequestOrigin(request)) {
+      return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
+    }
     const parsed = loginSchema.safeParse(await request.json());
     if (!parsed.success) return NextResponse.json({ error: "Invalid email or password." }, { status: 400 });
 
