@@ -37,7 +37,7 @@ export async function consumeAuthRateLimit(input: {
   const windowStart = new Date(now.getTime() - input.windowMs);
   const blockedUntil = new Date(now.getTime() + input.blockMs);
   try {
-    const rows = await prisma.$queryRaw<Array<{ attempts: number; blockedUntil: Date | null }>>\u0060
+    const rows = await prisma.$queryRaw<Array<{ attempts: number; blockedUntil: Date | null }>>`
       INSERT INTO "AuthRateLimitBucket" AS bucket
         ("id", "key", "attempts", "windowStartedAt", "blockedUntil", "updatedAt")
       VALUES (${randomUUID()}, ${key}, 1, ${now}, NULL, ${now})
