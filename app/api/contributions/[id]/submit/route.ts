@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canEditContribution, ownedContributionWhere } from "@/lib/access-policy";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!hasTrustedRequestOrigin(request)) return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
@@ -9,10 +10,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
   const { id } = await context.params;
-  const item = await prisma.contribution.findUnique({ where: { id } });
-  if (!item || item.userId !== user.id) return NextResponse.json({ error: "Contribution not found." }, { status: 404 });
+  const item = await prisma.contribution.findFirst({ where: ownedContributionWhere(user.id, id) });
+  if (!item) return NextResponse.json({ error: "Contribution not found." }, { status: 404 });
   if (!item.originalText?.trim()) return NextResponse.json({ error: "Original Khowar text is required before submission." }, { status: 400 });
-  if (!["DRAFT", "NEEDS_CORRECTION", "REVISION_PENDING"].includes(item.status)) {
+  if (!canEditContribution(item.status)) {
     return NextResponse.json({ error: "This contribution is not ready for submission." }, { status: 409 });
   }
 
