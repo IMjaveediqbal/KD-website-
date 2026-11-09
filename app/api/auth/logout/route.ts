@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { destroySession } from "@/lib/auth";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
-import { hasTrustedRequestOrigin } from "@/lib/admin-auth";
 
 export async function POST(request: Request) {
   if (!hasTrustedRequestOrigin(request)) {
