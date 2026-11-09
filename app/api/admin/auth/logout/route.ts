@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
+import { destroyAdminSession, getCurrentAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
