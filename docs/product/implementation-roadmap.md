@@ -21,7 +21,7 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 - [ ] Add persistent rate limiting and security monitoring for public registration and login before production.
 - [ ] Add account recovery and email verification when an email provider is configured.
 - [ ] Add server-protected account layouts and consistent loading/error states.
-- [ ] Keep the user dashboard focused on the signed-in user's own records.
+- [x] Keep the user dashboard and contribution API scoped to the signed-in user's own records; show moderation feedback to that contributor.
 - [ ] Add unit, integration, and end-to-end coverage for the account lifecycle.
 
 ## Phase 2 — Secure administration
@@ -29,9 +29,12 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 - [x] Implement separate admin sign-in and sign-out endpoints and a protected admin shell.
 - [x] Add private out-of-band admin provisioning; no public admin registration.
 - [x] Add server-side admin session verification and revocation.
-- [ ] Add persistent rate limiting and security monitoring before production.
-- [ ] Build an admin overview using real database counts only.
-- [ ] Add audit logging for all privileged actions.
+- [ ] Add persistent rate limiting and security monitoring for all privileged endpoints before production.
+- [x] Build an admin overview using live database counts only.
+- [x] Add searchable admin user directory with audited suspend/restore actions and session revocation.
+- [x] Add a protected contribution review queue with validate, return-for-correction, reject, and duplicate decisions.
+- [x] Record administrator login, moderation, and account-status changes in the admin audit log.
+- [x] Show recent administrator activity on the overview; a searchable full audit-log browser remains planned.
 
 ## Phase 3 — Dataset operations
 
