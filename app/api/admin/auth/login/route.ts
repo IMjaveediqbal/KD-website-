@@ -1,4 +1,5 @@
-import { createHmac, randomUUID } from "node:crypto";
+import { createHmac } from "node:crypto";
+import { ADMIN_LOGIN_WINDOW_MS, recordAdminLoginFailure } from "@/lib/admin-login-throttle";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { createAdminSession } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
@@ -6,8 +7,6 @@ import { compare, hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { adminLoginSchema } from "@/lib/admin-validation";
 
-const WINDOW_MS = 15 * 60 * 1000;
-const MAX_FAILURES = 5;
 const DUMMY_PASSWORD_HASH = hash("not-a-real-admin-password", 12);
 
 function throttleKey(email: string, clientAddress: string) {
@@ -65,59 +64,15 @@ export async function POST(request: Request) {
     const valid = Boolean(admin && admin.status === "ACTIVE" && passwordMatches);
 
     if (!valid || !admin) {
-      // Upsert is atomic for a given unique HMAC key. Concurrent failures
-      // cannot overwrite one another's counter with a stale read.
-      const rows = await prisma.$queryRaw<Array<{ blockedUntil: Date | null }>>`
-        INSERT INTO "AdminLoginThrottle"
-          ("id", "identifierHash", "failures", "windowStartedAt", "blockedUntil", "updatedAt")
-        VALUES (
-          ${randomUUID()},
-          ${key},
-          1,
-          ${now},
-          NULL,
-          ${now}
-        )
-        ON CONFLICT ("identifierHash") DO UPDATE SET
-          "failures" = CASE
-            WHEN "AdminLoginThrottle"."blockedUntil" IS NOT NULL
-              AND "AdminLoginThrottle"."blockedUntil" > ${now}
-              THEN "AdminLoginThrottle"."failures"
-            WHEN "AdminLoginThrottle"."windowStartedAt" <= ${new Date(now.getTime() - WINDOW_MS)}
-              THEN 1
-            ELSE "AdminLoginThrottle"."failures" + 1
-          END,
-          "windowStartedAt" = CASE
-            WHEN "AdminLoginThrottle"."blockedUntil" IS NOT NULL
-              AND "AdminLoginThrottle"."blockedUntil" > ${now}
-              THEN "AdminLoginThrottle"."windowStartedAt"
-            WHEN "AdminLoginThrottle"."windowStartedAt" <= ${new Date(now.getTime() - WINDOW_MS)}
-              THEN ${now}
-            ELSE "AdminLoginThrottle"."windowStartedAt"
-          END,
-          "blockedUntil" = CASE
-            WHEN "AdminLoginThrottle"."blockedUntil" IS NOT NULL
-              AND "AdminLoginThrottle"."blockedUntil" > ${now}
-              THEN "AdminLoginThrottle"."blockedUntil"
-            WHEN "AdminLoginThrottle"."windowStartedAt" <= ${new Date(now.getTime() - WINDOW_MS)}
-              THEN NULL
-            WHEN "AdminLoginThrottle"."failures" + 1 >= ${MAX_FAILURES}
-              THEN ${new Date(now.getTime() + WINDOW_MS)}
-            ELSE NULL
-          END,
-          "updatedAt" = ${now}
-        RETURNING "blockedUntil"
-      `;
-
-      const activeBlock = rows[0]?.blockedUntil;
-      if (activeBlock && activeBlock > now) {
+      const { blockedUntil } = await recordAdminLoginFailure(key, now);
+      if (blockedUntil) {
         return NextResponse.json(
           { error: "Too many unsuccessful attempts. Try again later." },
           {
             status: 429,
             headers: {
               "Retry-After": String(
-                Math.max(1, Math.ceil((activeBlock.getTime() - now.getTime()) / 1000)),
+                Math.max(1, Math.ceil((blockedUntil.getTime() - now.getTime()) / 1000)),
               ),
             },
           },
