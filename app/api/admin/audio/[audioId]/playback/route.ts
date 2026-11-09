@@ -2,12 +2,16 @@ import { NextResponse } from "next/server";
 import { getCurrentAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { createAudioReadUrl } from "@/lib/storage";
+import { checkAdminApiRateLimit } from "@/lib/admin-api-rate-limit";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_request: Request, context: { params: Promise<{ audioId: string }> }) {
+export async function GET(request: Request, context: { params: Promise<{ audioId: string }> }) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: "Administrator authentication required." }, { status: 401 });
+
+  const rateLimitResponse = await checkAdminApiRateLimit(request, admin.id, "audio-playback");
+  if (rateLimitResponse) return rateLimitResponse;
 
   const { audioId } = await context.params;
   const audio = await prisma.audioItem.findUnique({
