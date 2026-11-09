@@ -31,13 +31,18 @@ export async function createAdminSession(adminId: string) {
 export async function destroyAdminSession() {
   const store = await cookies();
   const token = store.get(ADMIN_SESSION_COOKIE)?.value;
-  if (token) {
-    await prisma.adminSession.updateMany({
-      where: { tokenHash: hashToken(token), revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
+
+  try {
+    if (token) {
+      await prisma.adminSession.updateMany({
+        where: { tokenHash: hashToken(token), revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    }
+  } finally {
+    // Clear the browser cookie even if the database revocation fails.
+    store.delete(ADMIN_SESSION_COOKIE);
   }
-  store.delete(ADMIN_SESSION_COOKIE);
 }
 
 export async function getCurrentAdmin() {
