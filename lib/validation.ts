@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 export const registerSchema = z.object({
-  email: z.string().email().max(254),
+  email: z.string().trim().email().max(254).transform((value) => value.toLowerCase()),
   password: z.string().min(10).max(128),
   displayName: z.string().trim().min(2).max(80),
-  username: z.string().trim().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/).optional(),
+  username: z.string().trim().toLowerCase().min(3).max(32).regex(/^[a-z0-9_]+$/).optional(),
 });
 
 export const loginSchema = z.object({
