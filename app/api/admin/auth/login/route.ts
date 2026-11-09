@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { compare, hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { createAdminSession, hasTrustedAdminOrigin } from "@/lib/admin-auth";
+import { createAdminSession, hasTrustedRequestOrigin } from "@/lib/admin-auth";
 import { adminLoginSchema } from "@/lib/admin-validation";
 
 const WINDOW_MS = 15 * 60 * 1000;
@@ -17,7 +17,7 @@ function throttleKey(email: string, clientAddress: string) {
 
 export async function POST(request: Request) {
   try {
-    if (!hasTrustedAdminOrigin(request)) {
+    if (!hasTrustedRequestOrigin(request)) {
       return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
     }
 
