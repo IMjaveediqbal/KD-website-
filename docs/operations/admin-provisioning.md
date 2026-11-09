@@ -56,11 +56,12 @@ Administrator accounts are intentionally separate from public contributor accoun
 - Admin sessions use a random opaque token; only its SHA-256 hash is stored in the database.
 - The browser cookie is HttpOnly, SameSite=Strict, expires after eight hours, and is Secure in production.
 - Disabled administrators and revoked or expired sessions are rejected server-side.
-- Failed attempts are throttled persistently by a keyed email-and-client-address identifier.
+- Failed admin sign-in attempts are throttled persistently by a keyed email-and-client-address identifier.
+- Contribution moderation, user-status changes, and audio playback URL issuance are additionally limited to 30 requests per administrator, action, and client address per minute. These buckets share the persistent HMAC-keyed rate-limit table; a limiter/database failure returns 503 rather than allowing the privileged action.
 - Admin login and logout require a trusted request Origin. In development, the expected origin follows the actual request host and port. In production, `APP_BASE_URL` and/or comma-separated `APP_ALLOWED_ORIGINS` must explicitly list exact trusted origins; an arbitrary Host or forwarded-host header is never used to expand the allow-list. Configure the hosting proxy to set trusted client-address headers.
 - Login and logout events are written to the administrator audit log.
-- Every future admin API must authenticate with `getCurrentAdmin()` / `requireAdmin()`; hiding a link or protecting only a page is not authorization.
+- Every future admin API must authenticate with `getCurrentAdmin()` / `requireAdmin()`; hiding a link or protecting only a page is not authorization. Add `checkAdminApiRateLimit()` to each privileged endpoint and choose a suitable per-action threshold.
 
 ## Production hardening still required
 
-Before public production launch, add edge-level rate limiting/WAF rules, MFA or passkeys, an audited password-rotation and recovery procedure, alerting for repeated failures, and automated security tests. Do not rely on application-level throttling as the only defense against distributed attacks.
+Before public production launch, extend persistent rate limiting to any new privileged endpoints, add edge-level rate limiting/WAF rules, MFA or passkeys, an audited password-rotation and recovery procedure, alerting for repeated failures, and automated security tests. Application limits are not a substitute for edge protection against distributed attacks. Do not rely on application-level throttling as the only defense against distributed attacks.
