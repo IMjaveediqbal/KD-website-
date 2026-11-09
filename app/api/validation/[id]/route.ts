@@ -39,7 +39,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   const input = body as { decision?: unknown; notes?: unknown };
   const legacyDecision = typeof input.decision === "string" ? input.decision : "";
-  const decision = legacyDecisionMap[legacyDecision];
+  const decision = Object.hasOwn(legacyDecisionMap, legacyDecision)
+    ? legacyDecisionMap[legacyDecision]
+    : undefined;
   if (!decision) {
     return NextResponse.json({ error: "Invalid moderation decision." }, { status: 400 });
   }
