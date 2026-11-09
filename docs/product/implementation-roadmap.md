@@ -13,18 +13,22 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 
 ## Phase 1 — Identity and workspace foundation
 
-- [x] Review and harden existing registration, login, logout, and session flows for same-origin requests and normalized account identifiers.
+- [x] Add shared same-origin protection to browser registration, login, and logout endpoints; support dynamic development ports and explicit production origins.
+- [x] Normalize email addresses and usernames consistently during registration; handle concurrent duplicate-account attempts safely.
+- [x] Keep public account responses independent of internal role metadata; all ordinary accounts begin with the same access.
+- [x] Use constant-work password comparison for unknown email addresses and revoke sessions for inactive accounts.
 - [x] Keep initial signup simple: email and password, with email verification deferred until an email provider is selected.
+- [ ] Add persistent rate limiting and security monitoring for public login and registration.
 - [ ] Add account recovery and email verification when an email provider is configured.
 - [ ] Add server-protected account layouts and consistent loading/error states.
 - [ ] Keep the user dashboard focused on the signed-in user's own records.
-- [ ] Add end-to-end coverage for account lifecycle.
+- [ ] Add unit, integration, and end-to-end coverage for the account lifecycle.
 
 ## Phase 2 — Secure administration
 
-- [ ] Implement separate admin sign-in and sign-out.
-- [ ] Provision the first admin out of band; no public admin registration.
-- [ ] Add server-side admin session verification and revocation.
+- [x] Implement separate admin sign-in and sign-out endpoints and a protected admin shell.
+- [x] Add private out-of-band admin provisioning; no public admin registration.
+- [x] Add server-side admin session verification and revocation.
 - [ ] Add persistent rate limiting and security monitoring before production.
 - [ ] Build an admin overview using real database counts only.
 - [ ] Add audit logging for all privileged actions.
