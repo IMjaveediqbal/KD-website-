@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { isAdminSessionUsable } from "@/lib/access-policy";
 
 const ADMIN_SESSION_COOKIE = "kd_admin_session";
 const ADMIN_SESSION_HOURS = 8;
@@ -49,7 +50,7 @@ export async function getCurrentAdmin() {
     include: { admin: { select: { id: true, email: true, displayName: true, status: true } } },
   });
 
-  if (!session || session.revokedAt || session.expiresAt <= new Date() || session.admin.status !== "ACTIVE") {
+  if (!session || !isAdminSessionUsable(session)) {
     if (session && !session.revokedAt) {
       await prisma.adminSession.update({
         where: { id: session.id },
