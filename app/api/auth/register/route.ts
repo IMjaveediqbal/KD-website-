@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
 import { registerSchema } from "@/lib/validation";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
-import { hasTrustedRequestOrigin } from "@/lib/admin-auth";
 
 export async function POST(request: Request) {
   try {
