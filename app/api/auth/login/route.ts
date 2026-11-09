@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     await createSession(user.id);
     return NextResponse.json({
-      user: { id: user.id, email: user.email, displayName: user.displayName, username: user.username, role: user.role },
+      user: { id: user.id, email: user.email, displayName: user.displayName, username: user.username },
     });
   } catch {
     return NextResponse.json({ error: "Unable to sign in." }, { status: 500 });
