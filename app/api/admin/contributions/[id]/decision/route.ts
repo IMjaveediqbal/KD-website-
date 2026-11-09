@@ -3,8 +3,13 @@ import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { getCurrentAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import type { ContributionStatus } from "@prisma/client";
+import {
+  buildModerationUpdate,
+  isContributionReviewable,
+  isModerationDecision,
+  isModerationNoteValid,
+} from "@/lib/admin-policy";
 
-const decisions = new Set(["VALIDATED", "NEEDS_CORRECTION", "REJECTED", "DUPLICATE"]);
 const reviewableStatuses: ContributionStatus[] = ["SUBMITTED", "UNDER_REVIEW", "EXPERT_REVIEW"];
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
@@ -25,8 +30,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const input = body as { decision?: unknown; note?: unknown };
   const decision = typeof input.decision === "string" ? input.decision : "";
   const note = typeof input.note === "string" ? input.note.trim() : "";
-  if (!decisions.has(decision)) return NextResponse.json({ error: "Unsupported moderation decision." }, { status: 400 });
-  if (note.length > 1000 || (decision !== "VALIDATED" && note.length === 0)) {
+  if (!isModerationDecision(decision)) return NextResponse.json({ error: "Unsupported moderation decision." }, { status: 400 });
+  if (!isModerationNoteValid(decision, note)) {
     return NextResponse.json({ error: "A review note of up to 1000 characters is required for this decision." }, { status: 400 });
   }
 
@@ -37,17 +42,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         select: { id: true, status: true, userId: true },
       });
       if (!current) return { kind: "missing" as const };
-      if (!reviewableStatuses.some((status) => status === current.status)) return { kind: "conflict" as const, status: current.status };
+      if (!isContributionReviewable(current.status)) return { kind: "conflict" as const, status: current.status };
 
       const updated = await tx.contribution.updateMany({
         where: { id, status: { in: reviewableStatuses } },
-        data: {
-          status: decision as "VALIDATED" | "NEEDS_CORRECTION" | "REJECTED" | "DUPLICATE",
-          validatedAt: decision === "VALIDATED" ? new Date() : null,
-          validatedBy: decision === "VALIDATED" ? admin.id : null,
-          correctionNote: decision === "NEEDS_CORRECTION" ? note : null,
-          rejectionReason: decision === "REJECTED" || decision === "DUPLICATE" ? note : null,
-        },
+        data: buildModerationUpdate(decision, note, admin.id),
       });
       if (updated.count !== 1) return { kind: "conflict" as const, status: current.status };
 
