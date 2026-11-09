@@ -46,7 +46,7 @@ export async function getCurrentAdmin() {
 
   const session = await prisma.adminSession.findUnique({
     where: { tokenHash: hashToken(token) },
-    include: { admin: true },
+    include: { admin: { select: { id: true, email: true, displayName: true, status: true } } },
   });
 
   if (!session || session.revokedAt || session.expiresAt <= new Date() || session.admin.status !== "ACTIVE") {
