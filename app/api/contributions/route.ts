@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     select: {
       id: true, clientId: true, type: true, status: true, title: true,
       originalText: true, normalizedText: true, englishTranslation: true, urduTranslation: true,
-      dialect: true, region: true, aiAssisted: true, createdAt: true, updatedAt: true,
+      dialect: true, region: true, aiAssisted: true, correctionNote: true, rejectionReason: true, createdAt: true, updatedAt: true,
     },
   });
   const hasMore = items.length > limit;
