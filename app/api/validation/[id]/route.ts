@@ -7,6 +7,7 @@ import {
   type ModerationDecision,
 } from "@/lib/admin-policy";
 import { moderateContribution } from "@/lib/admin-moderation";
+import { checkAdminApiRateLimit } from "@/lib/admin-api-rate-limit";
 
 const legacyDecisionMap: Record<string, ModerationDecision> = {
   VALIDATE: "VALIDATED",
