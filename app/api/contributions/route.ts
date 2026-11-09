@@ -3,6 +3,7 @@ import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { contributionSchema } from "@/lib/validation";
+import { ownedContributionWhere } from "@/lib/access-policy";
 
 export async function GET(request: Request) {
   if (!hasTrustedRequestOrigin(request)) return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
   const cursor = searchParams.get("cursor");
 
   const items = await prisma.contribution.findMany({
-    where: { userId: user.id },
+    where: ownedContributionWhere(user.id),
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: limit + 1,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
