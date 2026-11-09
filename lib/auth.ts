@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { isUserSessionUsable } from "@/lib/access-policy";
 
 const SESSION_COOKIE = "kd_session";
 const SESSION_DAYS = 30;
@@ -59,7 +60,7 @@ export async function getCurrentUser() {
     },
   });
 
-  if (!session || session.expiresAt <= new Date()) {
+  if (!session || !isUserSessionUsable(session)) {
     if (session) await prisma.session.delete({ where: { id: session.id } });
     store.delete(SESSION_COOKIE);
     return null;
