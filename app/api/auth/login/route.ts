@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { compare } from "bcryptjs";
+import { compare, hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
 import { loginSchema } from "@/lib/validation";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
-import { hasTrustedRequestOrigin } from "@/lib/admin-auth";
+
+const DUMMY_PASSWORD_HASH = hash("not-a-real-user-password", 12);
 
 export async function POST(request: Request) {
   try {
