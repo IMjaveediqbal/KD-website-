@@ -209,3 +209,13 @@ model AuditLog {
   @@index([actorId, createdAt])
   @@index([targetType, targetId, createdAt])
 }
+
+
+model AuthRateLimitBucket {
+  id              String   @id
+  key             String   @unique
+  attempts        Int      @default(0)
+  windowStartedAt DateTime @default(now())
+  blockedUntil    DateTime?
+  updatedAt       DateTime @updatedAt
+}
