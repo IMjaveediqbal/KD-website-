@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { getCurrentAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import type { ContributionStatus } from "@prisma/client";
 
 const decisions = new Set(["VALIDATED", "NEEDS_CORRECTION", "REJECTED", "DUPLICATE"]);
-const reviewableStatuses = ["SUBMITTED", "UNDER_REVIEW", "EXPERT_REVIEW"];
+const reviewableStatuses: ContributionStatus[] = ["SUBMITTED", "UNDER_REVIEW", "EXPERT_REVIEW"];
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!hasTrustedRequestOrigin(request)) {
@@ -36,7 +37,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         select: { id: true, status: true, userId: true },
       });
       if (!current) return { kind: "missing" as const };
-      if (!reviewableStatuses.includes(current.status)) return { kind: "conflict" as const, status: current.status };
+      if (!reviewableStatuses.some((status) => status === current.status)) return { kind: "conflict" as const, status: current.status };
 
       const updated = await tx.contribution.updateMany({
         where: { id, status: { in: reviewableStatuses } },
