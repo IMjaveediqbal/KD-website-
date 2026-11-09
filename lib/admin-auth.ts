@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { isAdminSessionUsable } from "@/lib/access-policy";
+import { revokeAdminSession } from "@/lib/admin-session-management";
 
 const ADMIN_SESSION_COOKIE = "kd_admin_session";
 const ADMIN_SESSION_HOURS = 8;
@@ -34,10 +35,7 @@ export async function destroyAdminSession() {
 
   try {
     if (token) {
-      await prisma.adminSession.updateMany({
-        where: { tokenHash: hashToken(token), revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
+      await revokeAdminSession(prisma, token);
     }
   } finally {
     // Clear the browser cookie even if the database revocation fails.
