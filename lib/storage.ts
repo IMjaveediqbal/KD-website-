@@ -1,4 +1,4 @@
-import { S3Client, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, HeadObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 
@@ -42,4 +42,14 @@ export async function headStoredObject(storageKey: string) {
     Bucket: bucketName,
     Key: storageKey,
   }));
+}
+
+export async function createAudioReadUrl(storageKey: string) {
+  const bucketName = requireStorage();
+  const command = new GetObjectCommand({
+    Bucket: bucketName,
+    Key: storageKey,
+    ResponseContentDisposition: "inline",
+  });
+  return getSignedUrl(createStorageClient(), command, { expiresIn: 300 });
 }
