@@ -2,15 +2,8 @@ import { NextResponse } from "next/server";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { getCurrentAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
-import type { ContributionStatus } from "@prisma/client";
-import {
-  buildModerationUpdate,
-  isContributionReviewable,
-  isModerationDecision,
-  isModerationNoteValid,
-} from "@/lib/admin-policy";
-
-const reviewableStatuses: ContributionStatus[] = ["SUBMITTED", "UNDER_REVIEW", "EXPERT_REVIEW"];
+import { isModerationDecision, isModerationNoteValid } from "@/lib/admin-policy";
+import { moderateContribution } from "@/lib/admin-moderation";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!hasTrustedRequestOrigin(request)) {
@@ -36,31 +29,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   }
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      const current = await tx.contribution.findUnique({
-        where: { id },
-        select: { id: true, status: true, userId: true },
-      });
-      if (!current) return { kind: "missing" as const };
-      if (!isContributionReviewable(current.status)) return { kind: "conflict" as const, status: current.status };
-
-      const updated = await tx.contribution.updateMany({
-        where: { id, status: { in: reviewableStatuses } },
-        data: buildModerationUpdate(decision, note, admin.id),
-      });
-      if (updated.count !== 1) return { kind: "conflict" as const, status: current.status };
-
-      await tx.adminAuditLog.create({
-        data: {
-          adminId: admin.id,
-          action: `CONTRIBUTION_${decision}`,
-          targetType: "Contribution",
-          targetId: id,
-          metadata: { previousStatus: current.status, note },
-        },
-      });
-      return { kind: "updated" as const };
-    });
+    const result = await prisma.$transaction((tx) =>
+      moderateContribution(tx, { contributionId: id, adminId: admin.id, decision, note })
+    );
 
     if (result.kind === "missing") return NextResponse.json({ error: "Contribution not found." }, { status: 404 });
     if (result.kind === "conflict") return NextResponse.json({ error: `This contribution is no longer awaiting review (current status: ${result.status}).` }, { status: 409 });
