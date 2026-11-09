@@ -3,6 +3,7 @@ import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
 import { registerSchema } from "@/lib/validation";
+import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { hasTrustedRequestOrigin } from "@/lib/admin-auth";
 
 export async function POST(request: Request) {
@@ -14,9 +15,10 @@ export async function POST(request: Request) {
     if (!parsed.success) return NextResponse.json({ error: "Invalid registration details." }, { status: 400 });
 
     const { email, password, displayName, username } = parsed.data;
-    const normalizedEmail = email.toLowerCase();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedUsername = username?.trim().toLowerCase();
     const existing = await prisma.user.findFirst({
-      where: { OR: [{ email: normalizedEmail }, ...(username ? [{ username }] : [])] },
+      where: { OR: [{ email: normalizedEmail }, ...(normalizedUsername ? [{ username: normalizedUsername }] : [])] },
       select: { email: true, username: true },
     });
     if (existing) {
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
         email: normalizedEmail,
         passwordHash,
         displayName,
-        username: username || undefined,
+        username: normalizedUsername || undefined,
         profile: { create: { preferredUiLanguage: "en" } },
       },
       select: { id: true, email: true, displayName: true, username: true, role: true },
@@ -40,7 +42,15 @@ export async function POST(request: Request) {
 
     await createSession(user.id);
     return NextResponse.json({ user }, { status: 201 });
-  } catch {
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json({ error: "Email or username is already in use." }, { status: 409 });
+    }
     return NextResponse.json({ error: "Unable to create the account." }, { status: 500 });
   }
 }
