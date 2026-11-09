@@ -66,7 +66,7 @@ export default async function AdminHomePage() {
         <div className="cards">
           <div><b>Contributions</b><span>Review submitted text and audio records, then approve, return, reject, or mark duplicates.</span><Link className="button buttonSmall" href="/admin/contributions">Open review queue</Link></div>
           <div><b>User accounts</b><span>Browse registered accounts and their account status without exposing password or session secrets.</span><Link className="button buttonSmall" href="/admin/users">Manage users</Link></div>
-          <div><b>Audit activity</b><span>Recent administrator actions are recorded for accountability.</span><span className="mutedLine">Recent activity shown below</span></div>
+          <div><b>Audit activity</b><span>Search the complete, read-only history of privileged actions.</span><Link className="button buttonSmall" href="/admin/audit">Open audit log</Link></div>
           <div><b>Platform security</b><span>Admin identity and sessions remain separate from contributor authentication.</span><span className="adminStatusText">Protected</span></div>
         </div>
       </section>
