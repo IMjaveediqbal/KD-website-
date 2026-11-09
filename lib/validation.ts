@@ -14,7 +14,7 @@ export const loginSchema = z.object({
 
 export const profileSchema = z.object({
   displayName: z.string().trim().min(2).max(80).optional(),
-  username: z.string().trim().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/).optional().nullable(),
+  username: z.string().trim().toLowerCase().min(3).max(32).regex(/^[a-z0-9_]+$/).optional().nullable(),
   bio: z.string().trim().max(1000).optional().nullable(),
   preferredUiLanguage: z.enum(["en", "ur", "khw"]).optional(),
   dialect: z.string().trim().max(120).optional().nullable(),
