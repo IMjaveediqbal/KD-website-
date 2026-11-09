@@ -4,7 +4,17 @@ import { getCurrentUser } from "@/lib/auth";
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ user: null }, { status: 401 });
-  const { role, ...publicUser } = user;
-  void role;
+  // Never serialize the database user model: it contains passwordHash and internal fields.
+  const publicUser = {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    displayName: user.displayName,
+    avatarUrl: user.avatarUrl,
+    emailVerifiedAt: user.emailVerifiedAt,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    profile: user.profile,
+  };
   return NextResponse.json({ user: publicUser });
 }
