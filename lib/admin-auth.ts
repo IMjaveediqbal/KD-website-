@@ -29,13 +29,13 @@ export async function createAdminSession(adminId: string) {
   });
 }
 
-export async function destroyAdminSession() {
+export async function destroyAdminSession(adminId?: string) {
   const store = await cookies();
   const token = store.get(ADMIN_SESSION_COOKIE)?.value;
 
   try {
     if (token) {
-      await revokeAdminSession(prisma, token);
+      await revokeAdminSession(prisma, token, adminId);
     }
   } finally {
     // Clear the browser cookie even if the database revocation fails.
