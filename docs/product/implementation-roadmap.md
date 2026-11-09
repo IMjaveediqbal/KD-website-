@@ -28,7 +28,8 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 - [x] Add initial regression coverage for validation, same-origin security, Khowar text preservation, and concurrent database rate limiting.
 - [x] Add regression tests for active/expired/suspended user sessions, active/expired/revoked/disabled admin sessions, contribution ownership scoping, and editable-status policy.
 - [x] Add regression tests for allowed moderation decisions, reviewable states, note requirements, and decision-specific update fields.
-- [ ] Add route-level integration and browser end-to-end tests for account lifecycle, admin-boundary responses, and moderation audit transactions.
+- [ ] Add route-level integration and browser end-to-end tests for account lifecycle and admin-boundary responses.
+- [x] Add database-backed moderation integration tests for atomic audit logging, review-state enforcement, and concurrent decision conflicts.
 
 ## Phase 2 — Secure administration
 
