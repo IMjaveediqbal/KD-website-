@@ -30,6 +30,7 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 - [x] Add regression tests for allowed moderation decisions, reviewable states, note requirements, and decision-specific update fields.
 - [ ] Add route-level integration and browser end-to-end tests for account lifecycle and admin-boundary responses.
 - [x] Add database-backed admin account-status integration tests for session revocation, restore auditing, and deactivated-account protection.
+- [x] Add database-backed contribution ownership isolation coverage for cross-account reads.
 - [x] Add database-backed moderation integration tests for atomic audit logging, review-state enforcement, and concurrent decision conflicts.
 
 ## Phase 2 — Secure administration
