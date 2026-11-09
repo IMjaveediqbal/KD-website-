@@ -18,6 +18,7 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 - [x] Keep public account responses independent of internal role metadata; all ordinary accounts begin with the same access.
 - [x] Use constant-work password comparison for unknown email addresses and revoke sessions for inactive accounts.
 - [x] Keep initial signup simple: email and password, with email verification deferred until an email provider is selected.
+- [ ] Add persistent rate limiting for public registration and login before production.
 - [ ] Add persistent rate limiting and security monitoring for public login and registration.
 - [ ] Add account recovery and email verification when an email provider is configured.
 - [ ] Add server-protected account layouts and consistent loading/error states.
