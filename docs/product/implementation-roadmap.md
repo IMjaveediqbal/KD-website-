@@ -13,7 +13,8 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 
 ## Phase 1 — Identity and workspace foundation
 
-- [ ] Review and harden existing registration, login, logout, and session flows.
+- [x] Review and harden existing registration, login, logout, and session flows for same-origin requests and normalized account identifiers.
+- [x] Keep initial signup simple: email and password, with email verification deferred until an email provider is selected.
 - [ ] Add account recovery and email verification when an email provider is configured.
 - [ ] Add server-protected account layouts and consistent loading/error states.
 - [ ] Keep the user dashboard focused on the signed-in user's own records.
