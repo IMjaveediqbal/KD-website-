@@ -17,9 +17,6 @@ function throttleKey(email: string, clientAddress: string) {
 
 export async function POST(request: Request) {
   try {
-    if (!process.env.APP_BASE_URL) {
-      return NextResponse.json({ error: "Authentication is not configured." }, { status: 500 });
-    }
     if (!hasTrustedAdminOrigin(request)) {
       return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
     }
