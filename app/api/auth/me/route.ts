@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ user: null }, { status: 401 });
-  const { role: _internalRole, ...publicUser } = user;
+  const { role, ...publicUser } = user;
+  void role;
   return NextResponse.json({ user: publicUser });
 }
