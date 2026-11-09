@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { destroyAdminSession, getCurrentAdmin, hasTrustedAdminOrigin } from "@/lib/admin-auth";
+import { destroyAdminSession, getCurrentAdmin, hasTrustedRequestOrigin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
-  if (!hasTrustedAdminOrigin(request)) {
+  if (!hasTrustedRequestOrigin(request)) {
     return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
   }
 
