@@ -2,9 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import type { ContributionStatus } from "@prisma/client";
 import AdminLogoutButton from "./logout-button";
 
 export const dynamic = "force-dynamic";
+
+const reviewStatuses: ContributionStatus[] = ["SUBMITTED", "UNDER_REVIEW", "EXPERT_REVIEW"];
 
 export default async function AdminHomePage() {
   const admin = await getCurrentAdmin();
@@ -13,7 +16,7 @@ export default async function AdminHomePage() {
   const [users, contributions, awaitingReview, validated, audioItems, recentActivity] = await Promise.all([
     prisma.user.count(),
     prisma.contribution.count(),
-    prisma.contribution.count({ where: { status: { in: ["SUBMITTED", "UNDER_REVIEW", "EXPERT_REVIEW"] } } }),
+    prisma.contribution.count({ where: { status: { in: reviewStatuses } } }),
     prisma.contribution.count({ where: { status: "VALIDATED" } }),
     prisma.audioItem.count(),
     prisma.adminAuditLog.findMany({
