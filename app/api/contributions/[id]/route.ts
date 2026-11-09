@@ -3,6 +3,7 @@ import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { contributionSchema } from "@/lib/validation";
+import { canEditContribution, ownedContributionWhere } from "@/lib/access-policy";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!hasTrustedRequestOrigin(request)) return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
@@ -10,9 +11,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
   const { id } = await context.params;
-  const existing = await prisma.contribution.findUnique({ where: { id } });
-  if (!existing || existing.userId !== user.id) return NextResponse.json({ error: "Contribution not found." }, { status: 404 });
-  if (!["DRAFT", "NEEDS_CORRECTION", "REVISION_PENDING"].includes(existing.status)) {
+  const existing = await prisma.contribution.findFirst({ where: ownedContributionWhere(user.id, id) });
+  if (!existing) return NextResponse.json({ error: "Contribution not found." }, { status: 404 });
+  if (!canEditContribution(existing.status)) {
     return NextResponse.json({ error: "This contribution can no longer be edited." }, { status: 409 });
   }
 
