@@ -9,7 +9,8 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 - [x] Document the staged target folder structure.
 - [ ] Validate environment variables at startup.
 - [ ] Establish lint, typecheck, build, and test gates.
-- [ ] Add migration and backup/restore runbooks.
+- [x] Add an initial core-schema migration and safe fresh/existing-database migration runbook.
+- [ ] Add backup/restore runbooks and verified restore drills.
 
 ## Phase 1 — Identity and workspace foundation
 
