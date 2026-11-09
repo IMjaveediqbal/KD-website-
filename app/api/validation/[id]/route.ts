@@ -26,6 +26,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     return NextResponse.json({ error: "Administrator authentication required." }, { status: 401 });
   }
 
+  const rateLimitResponse = await checkAdminApiRateLimit(request, admin.id, "legacy-moderation");
+  if (rateLimitResponse) return rateLimitResponse;
+
   const { id } = await context.params;
   let body: unknown;
   try {
