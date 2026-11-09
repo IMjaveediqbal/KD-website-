@@ -1,7 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { hasTrustedRequestOrigin } from "@/lib/request-security";
 
 const ADMIN_SESSION_COOKIE = "kd_admin_session";
 const ADMIN_SESSION_HOURS = 8;
@@ -74,6 +73,3 @@ export async function requireAdmin() {
   return admin;
 }
 
-export function hasTrustedAdminOrigin(request: Request) {
-  return hasTrustedRequestOrigin(request);
-}
