@@ -7,9 +7,18 @@ import { profileSchema } from "@/lib/validation";
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-  const { role, status, ...publicUser } = user;
-  void role;
-  void status;
+  // Return an explicit public profile shape; never serialize the database user model.
+  const publicUser = {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    displayName: user.displayName,
+    avatarUrl: user.avatarUrl,
+    emailVerifiedAt: user.emailVerifiedAt,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    profile: user.profile,
+  };
   return NextResponse.json({ user: publicUser });
 }
 
