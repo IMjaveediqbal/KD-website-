@@ -9,3 +9,4 @@ CREATE TABLE "AuthRateLimitBucket" (
   CONSTRAINT "AuthRateLimitBucket_pkey" PRIMARY KEY ("id")
 );
 CREATE UNIQUE INDEX "AuthRateLimitBucket_key_key" ON "AuthRateLimitBucket"("key");
+CREATE INDEX "AuthRateLimitBucket_windowStartedAt_idx" ON "AuthRateLimitBucket"("windowStartedAt");
