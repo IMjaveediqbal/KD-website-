@@ -2,6 +2,10 @@
 
 KDW uses Prisma ORM 7.10.1 with the PostgreSQL driver adapter and Prisma Migrate to version PostgreSQL schema changes. The CLI reads `DATABASE_URL` from the root `prisma.config.ts`; the runtime client uses `@prisma/adapter-pg`. Keep `prisma` and `@prisma/client` pinned to the same 7.10.1 version. Do not change them to `latest`: the Prisma 8 release candidate is not compatible with this Prisma 7 schema/client workflow. Never run a schema migration against production until a current backup exists and the target database has been inspected.
 
+## Continuous integration
+
+The CI workflow supplies a disposable placeholder `DATABASE_URL` and a non-production `AUTH_SECRET` so Prisma Client generation and schema validation can run without connecting to a real database. These values must never be reused in deployed environments.
+
 ## Fresh database
 
 1. Create an empty PostgreSQL database.
