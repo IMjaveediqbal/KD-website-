@@ -1,12 +1,12 @@
 # Database migrations and deployment
 
-KDW uses Prisma Migrate to version PostgreSQL schema changes. Never run a schema migration against production until a current backup exists and the target database has been inspected.
+KDW uses Prisma ORM 7.10.1 with the PostgreSQL driver adapter and Prisma Migrate to version PostgreSQL schema changes. The CLI reads `DATABASE_URL` from the root `prisma.config.ts`; the runtime client uses `@prisma/adapter-pg`. Keep `prisma` and `@prisma/client` pinned to the same 7.10.1 version. Do not change them to `latest`: the Prisma 8 release candidate is not compatible with this Prisma 7 schema/client workflow. Never run a schema migration against production until a current backup exists and the target database has been inspected.
 
 ## Fresh database
 
 1. Create an empty PostgreSQL database.
 2. Configure `DATABASE_URL` in the deployment environment.
-3. Install the exact dependencies recorded by the project lockfile.
+3. Install the project dependencies with `npm install` (a committed npm lockfile is still to be added).
 4. Apply migrations in order:
 
    ```bash
