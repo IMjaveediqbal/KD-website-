@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -6,6 +7,7 @@ const allowed = new Set(["VALIDATOR","EXPERT","ADMIN","SUPER_ADMIN"]);
 const decisions = new Set(["VALIDATE","NEEDS_CORRECTION","REJECT","EXPERT_REVIEW","DUPLICATE"]);
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+  if (!hasTrustedRequestOrigin(request)) return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
   const user = await getCurrentUser();
   if (!user || !allowed.has(user.role)) return NextResponse.json({ error: "Validator access required." }, { status: 403 });
   const { id } = await context.params;
