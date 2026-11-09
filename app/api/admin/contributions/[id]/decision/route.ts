@@ -4,6 +4,7 @@ import { getCurrentAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { isModerationDecision, isModerationNoteValid } from "@/lib/admin-policy";
 import { moderateContribution } from "@/lib/admin-moderation";
+import { checkAdminApiRateLimit } from "@/lib/admin-api-rate-limit";
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!hasTrustedRequestOrigin(request)) {
@@ -12,6 +13,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: "Administrator authentication required." }, { status: 401 });
+
+  const rateLimitResponse = await checkAdminApiRateLimit(request, admin.id, "contribution-moderation");
+  if (rateLimitResponse) return rateLimitResponse;
 
   const { id } = await context.params;
   let body: unknown;
