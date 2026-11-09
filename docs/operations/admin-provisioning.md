@@ -4,7 +4,11 @@ Administrator accounts are intentionally separate from public contributor accoun
 
 ## First-time setup
 
-1. Configure `DATABASE_URL`, `AUTH_SECRET` (a cryptographically random secret of at least 32 bytes), and `APP_BASE_URL` in the deployment environment. For local development, copy `.env.example` to `.env` and set real local values. Never commit `.env`.
+1. Configure `DATABASE_URL` and `AUTH_SECRET` (a cryptographically random secret of at least 32 bytes). For local development, copy `.env.example` to `.env`; leave `APP_BASE_URL` and `APP_ALLOWED_ORIGINS` empty unless you specifically need an additional trusted origin. Never commit `.env`.
+
+   Local development automatically checks the browser Origin against the actual request origin, including the active port. You can run Next.js on a different port (for example, with `npm run dev -- --port 3100`) without editing origin configuration.
+
+   In production, set `APP_BASE_URL` to the exact public origin (scheme, hostname, and optional port), such as `https://dataset.example.org`. If the same deployment must accept additional preview or alternate origins, list each exact origin in `APP_ALLOWED_ORIGINS`, separated by commas. Do not use wildcards.
 2. Install dependencies and generate the Prisma client:
 
    ```bash
@@ -53,7 +57,7 @@ Administrator accounts are intentionally separate from public contributor accoun
 - The browser cookie is HttpOnly, SameSite=Strict, expires after eight hours, and is Secure in production.
 - Disabled administrators and revoked or expired sessions are rejected server-side.
 - Failed attempts are throttled persistently by a keyed email-and-client-address identifier.
-- Admin login and logout require a matching request Origin. Keep `APP_BASE_URL` exact and configure the hosting proxy to set trusted client-address headers.
+- Admin login and logout require a trusted request Origin. In development, the expected origin follows the actual request host and port. In production, `APP_BASE_URL` and/or comma-separated `APP_ALLOWED_ORIGINS` must explicitly list exact trusted origins; an arbitrary Host or forwarded-host header is never used to expand the allow-list. Configure the hosting proxy to set trusted client-address headers.
 - Login and logout events are written to the administrator audit log.
 - Every future admin API must authenticate with `getCurrentAdmin()` / `requireAdmin()`; hiding a link or protecting only a page is not authorization.
 
