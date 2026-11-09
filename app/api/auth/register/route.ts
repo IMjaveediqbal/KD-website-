@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         username: normalizedUsername || undefined,
         profile: { create: { preferredUiLanguage: "en" } },
       },
-      select: { id: true, email: true, displayName: true, username: true, role: true },
+      select: { id: true, email: true, displayName: true, username: true },
     });
 
     await createSession(user.id);
