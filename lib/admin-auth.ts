@@ -79,7 +79,7 @@ export async function requireAdmin() {
  * In production, configure APP_BASE_URL and/or APP_ALLOWED_ORIGINS explicitly;
  * never trust an arbitrary Host or forwarded-host header as an allow-list.
  */
-export function hasTrustedAdminOrigin(request: Request) {
+export function hasTrustedRequestOrigin(request: Request) {
   const requestOrigin = (() => {
     try {
       return new URL(request.url).origin;
