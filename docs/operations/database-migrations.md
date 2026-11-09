@@ -51,3 +51,18 @@ If any table or column is missing, has a different type, or contains an unexpect
 ## Backup and restore
 
 A backup/restore runbook and scheduled restore drills are still required before production launch. At minimum, take a database backup before each production migration and verify that the backup can be restored into an isolated database.
+
+
+## Authentication rate-limit storage maintenance
+
+The `AuthRateLimitBucket` table stores only keyed HMAC bucket identifiers, attempt counts, and timestamps; raw email addresses and client IP addresses are not stored. Public registration and login fail closed with HTTP 503 if `AUTH_SECRET` is missing/short or the database-backed limiter is unavailable. Set `AUTH_SECRET` to a cryptographically random value of at least 32 bytes in every environment, and configure the ingress proxy to overwrite `X-Forwarded-For` before the application receives requests.
+
+Periodically remove expired buckets (for example, daily through the deployment scheduler) with:
+
+```sql
+DELETE FROM "AuthRateLimitBucket"
+WHERE "windowStartedAt" < NOW() - INTERVAL '48 hours'
+  AND ("blockedUntil" IS NULL OR "blockedUntil" < NOW());
+```
+
+Do not run this cleanup more frequently than the longest configured rate-limit window/block period.
