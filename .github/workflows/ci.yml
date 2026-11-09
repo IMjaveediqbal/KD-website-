@@ -34,5 +34,8 @@ jobs:
       - run: npx prisma generate
       - run: npx prisma validate
       - run: npx prisma migrate deploy
+      - run: npm test
+        env:
+          RUN_DB_TESTS: "true"
       - run: npm run typecheck
       - run: npm run build
