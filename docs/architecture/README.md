@@ -98,6 +98,8 @@ This is a target organization, not a requirement to move every existing file in 
 
 A contribution may evolve into one or more curated domain records after review. The original submission remains traceable and must not be silently overwritten.
 
+The accepted source-submission/curated-record boundary, revision model, provenance, consent evidence, and additive migration strategy are specified in [ADR 0003](../decisions/0003-source-and-curated-dataset-boundary.md).
+
 ## 5. Data integrity and language governance
 
 Every language record should be able to preserve:
