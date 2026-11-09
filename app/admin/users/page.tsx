@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
+import UserStatusAction from "./user-status-action";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
 
   const params = await searchParams;
   const query = (params.q || "").trim().slice(0, 80);
-  const page = Math.max(1, Number.parseInt(params.page || "1", 10) || 1);
+  const requestedPage = Math.max(1, Number.parseInt(params.page || "1", 10) || 1);
   const pageSize = 25;
   const where = query ? {
     OR: [
@@ -23,26 +24,25 @@ export default async function AdminUsersPage({ searchParams }: Props) {
     ],
   } : {};
 
-  const [total, users] = await Promise.all([
-    prisma.user.count({ where }),
-    prisma.user.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      select: {
-        id: true, email: true, username: true, displayName: true,
-        status: true, createdAt: true, emailVerifiedAt: true,
-        _count: { select: { contributions: true } },
-      },
-    }),
-  ]);
+  const total = await prisma.user.count({ where });
   const pages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(requestedPage, pages);
+  const users = await prisma.user.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+    select: {
+      id: true, email: true, username: true, displayName: true,
+      status: true, createdAt: true, emailVerifiedAt: true,
+      _count: { select: { contributions: true } },
+    },
+  });
 
   return (
     <main className="pageShell">
       <header className="formHeader">
-        <div><div className="sectionLabel">ADMINISTRATION · ACCOUNTS</div><h1>User accounts</h1><p>Browse public accounts. Password hashes, session tokens, and private authentication data are never displayed.</p></div>
+        <div><div className="sectionLabel">ADMINISTRATION · ACCOUNTS</div><h1>User accounts</h1><p>Browse public accounts and suspend or restore access. Password hashes, session tokens, and private authentication data are never displayed.</p></div>
         <Link href="/admin" className="button buttonGhost">Back to overview</Link>
       </header>
       <form className="datasetFilters" action="/admin/users">
@@ -58,6 +58,7 @@ export default async function AdminUsersPage({ searchParams }: Props) {
               <h2>{user.displayName || user.username || "Unnamed user"}</h2>
               <p>{user.email}</p>
               <div className="mutedLine">{user.username ? `@${user.username}` : "No username"} · Account ID: {user.id}</div>
+              <UserStatusAction userId={user.id} status={user.status} />
             </article>
           ))}
         </div>
