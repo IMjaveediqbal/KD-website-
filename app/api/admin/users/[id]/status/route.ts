@@ -3,6 +3,7 @@ import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { getCurrentAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { changeUserStatus } from "@/lib/admin-user-management";
+import { checkAdminApiRateLimit } from "@/lib/admin-api-rate-limit";
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!hasTrustedRequestOrigin(request)) {
@@ -11,6 +12,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: "Administrator authentication required." }, { status: 401 });
+
+  const rateLimitResponse = await checkAdminApiRateLimit(request, admin.id, "user-status");
+  if (rateLimitResponse) return rateLimitResponse;
 
   const { id } = await context.params;
   let body: unknown;
