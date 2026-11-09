@@ -39,7 +39,7 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 - [x] Add private out-of-band admin provisioning; no public admin registration.
 - [x] Add server-side admin session verification and revocation.
 - [x] Add atomic database-backed failed-login throttling for administrator password sign-in, with concurrent-attempt regression coverage.
-- [ ] Add persistent rate limiting and security monitoring for all privileged endpoints before production.
+- [ ] Extend persistent rate limiting to every privileged endpoint and add security monitoring before production. (Moderation, user-status, and audio playback endpoints are covered.)
 - [x] Build an admin overview using live database counts only.
 - [x] Add searchable admin user directory with audited suspend/restore actions and session revocation.
 - [x] Add a protected contribution review queue with validate, return-for-correction, reject, and duplicate decisions.
