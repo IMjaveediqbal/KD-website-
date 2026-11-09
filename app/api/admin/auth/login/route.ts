@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
+import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { NextResponse } from "next/server";
 import { compare, hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { createAdminSession, hasTrustedRequestOrigin } from "@/lib/admin-auth";
 import { adminLoginSchema } from "@/lib/admin-validation";
 
 const WINDOW_MS = 15 * 60 * 1000;
