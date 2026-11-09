@@ -55,10 +55,14 @@ test("admin session persistence enforces expiry, revocation, and disabled-accoun
     assert.equal(isAdminSessionUsable(disabledSession), false);
 
     await prisma.adminAccount.update({ where: { id: adminId }, data: { status: "ACTIVE" } });
-    const firstRevocation = await revokeAdminSession(prisma, activeToken);
+    const firstRevocation = await revokeAdminSession(prisma, activeToken, adminId);
     const repeatedRevocation = await revokeAdminSession(prisma, activeToken);
     assert.equal(firstRevocation.count, 1);
     assert.equal(repeatedRevocation.count, 0);
+    assert.equal(
+      await prisma.adminAuditLog.count({ where: { adminId, action: "ADMIN_LOGOUT", targetType: "ADMIN_SESSION" } }),
+      1,
+    );
 
     const revokedSession = await prisma.adminSession.findUniqueOrThrow({
       where: { tokenHash: hash(activeToken) },
