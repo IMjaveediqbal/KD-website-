@@ -8,6 +8,20 @@ on:
 jobs:
   web:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: kdw_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d kdw_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/kdw_ci?schema=public
       AUTH_SECRET: ci-only-secret-for-build-validation-at-least-32-bytes
@@ -19,5 +33,6 @@ jobs:
       - run: npm install
       - run: npx prisma generate
       - run: npx prisma validate
+      - run: npx prisma migrate deploy
       - run: npm run typecheck
       - run: npm run build
