@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import { ADMIN_LOGIN_WINDOW_MS, recordAdminLoginFailure } from "@/lib/admin-login-throttle";
+import { recordAdminLoginFailure } from "@/lib/admin-login-throttle";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { createAdminSession } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
