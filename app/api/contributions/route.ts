@@ -30,6 +30,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!hasTrustedRequestOrigin(request)) return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
 
