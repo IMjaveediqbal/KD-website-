@@ -26,7 +26,7 @@ export async function PATCH(request: Request) {
   const data = parsed.data;
   try {
     const updated = await prisma.$transaction(async (tx) => {
-      if (data.username !== undefined && data.username !== user.username) {
+      if (data.username && data.username !== user.username) {
         const taken = await tx.user.findFirst({
           where: { username: data.username ?? undefined, id: { not: user.id } },
           select: { id: true },
