@@ -8,7 +8,8 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 - [x] Define domain boundaries and security principles.
 - [x] Document the staged target folder structure.
 - [ ] Validate environment variables at startup.
-- [ ] Establish lint, typecheck, build, and test gates.
+- [x] Establish typecheck, production-build, Prisma-validation, migration, and regression-test gates in CI.
+- [ ] Add lint gate and committed npm lockfile.
 - [x] Add an initial core-schema migration and safe fresh/existing-database migration runbook.
 - [ ] Add backup/restore runbooks and verified restore drills.
 
@@ -24,7 +25,8 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 - [ ] Add account recovery and email verification when an email provider is configured.
 - [ ] Add server-protected account layouts and consistent loading/error states.
 - [x] Keep the user dashboard and contribution API scoped to the signed-in user's own records; show moderation feedback to that contributor.
-- [ ] Add unit, integration, and end-to-end coverage for the account lifecycle.
+- [x] Add initial regression coverage for validation, same-origin security, Khowar text preservation, and concurrent database rate limiting.
+- [ ] Expand account lifecycle coverage with session, ownership, admin-boundary, and browser end-to-end tests.
 
 ## Phase 2 — Secure administration
 
