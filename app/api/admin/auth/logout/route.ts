@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { destroyAdminSession, getCurrentAdmin } from "@/lib/admin-auth";
-import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   if (!hasTrustedRequestOrigin(request)) {
@@ -11,19 +10,8 @@ export async function POST(request: Request) {
   try {
     const admin = await getCurrentAdmin();
 
-    // Revoke the session before writing the audit event so an audit-store
-    // outage cannot leave the administrator signed in.
-    await destroyAdminSession();
-
-    if (admin) {
-      await prisma.adminAuditLog.create({
-        data: {
-          adminId: admin.id,
-          action: "ADMIN_LOGOUT",
-          targetType: "ADMIN_SESSION",
-        },
-      });
-    }
+    // The session service revokes first, then writes the audit event.
+    await destroyAdminSession(admin?.id);
 
     return NextResponse.json({ ok: true });
   } catch {
