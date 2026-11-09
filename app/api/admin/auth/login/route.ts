@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHmac } from "node:crypto";
 import { hasTrustedRequestOrigin } from "@/lib/request-security";
 import { createAdminSession } from "@/lib/admin-auth";
 import { NextResponse } from "next/server";
@@ -12,8 +12,12 @@ const DUMMY_PASSWORD_HASH = hash("not-a-real-admin-password", 12);
 
 function throttleKey(email: string, clientAddress: string) {
   const secret = process.env.AUTH_SECRET;
-  if (!secret || Buffer.byteLength(secret) < 32) throw new Error("AUTH_SECRET must contain at least 32 bytes.");
-  return createHash("sha256").update(`${secret}:${email}:${clientAddress}`).digest("hex");
+  if (!secret || Buffer.byteLength(secret) < 32) {
+    throw new Error("AUTH_SECRET must contain at least 32 bytes.");
+  }
+  return createHmac("sha256", secret)
+    .update(`admin-login:${email}:${clientAddress}`)
+    .digest("hex");
 }
 
 export async function POST(request: Request) {
@@ -27,49 +31,103 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 400 });
     }
 
-    // In production, the hosting proxy must overwrite/append these headers rather than pass client values through.
+    // The ingress proxy must overwrite X-Forwarded-For; this value is only
+    // used inside an HMAC bucket key and is never trusted for authorization.
     const forwarded = request.headers.get("x-forwarded-for");
-    const clientAddress = (forwarded ? forwarded.split(",").at(-1)?.trim() : null)
-      || request.headers.get("x-real-ip")
-      || "unknown";
+    const clientAddress =
+      (forwarded ? forwarded.split(",").at(-1)?.trim() : null) ||
+      request.headers.get("x-real-ip")?.trim() ||
+      "unknown";
     const email = parsed.data.email;
     const key = throttleKey(email, clientAddress);
     const now = new Date();
-    let throttle = await prisma.adminLoginThrottle.findUnique({ where: { identifierHash: key } });
 
+    const throttle = await prisma.adminLoginThrottle.findUnique({
+      where: { identifierHash: key },
+    });
     if (throttle?.blockedUntil && throttle.blockedUntil > now) {
       return NextResponse.json(
         { error: "Too many unsuccessful attempts. Try again later." },
-        { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((throttle.blockedUntil.getTime() - now.getTime()) / 1000))) } }
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(
+              Math.max(1, Math.ceil((throttle.blockedUntil.getTime() - now.getTime()) / 1000)),
+            ),
+          },
+        },
       );
     }
 
-    if (throttle && now.getTime() - throttle.windowStartedAt.getTime() >= WINDOW_MS) {
-      throttle = await prisma.adminLoginThrottle.update({
-        where: { identifierHash: key },
-        data: { failures: 0, windowStartedAt: now, blockedUntil: null },
-      });
-    }
-
     const admin = await prisma.adminAccount.findUnique({ where: { email } });
-    const passwordHash = admin?.passwordHash ?? await DUMMY_PASSWORD_HASH;
+    const passwordHash = admin?.passwordHash ?? (await DUMMY_PASSWORD_HASH);
     const passwordMatches = await compare(parsed.data.password, passwordHash);
     const valid = Boolean(admin && admin.status === "ACTIVE" && passwordMatches);
 
     if (!valid || !admin) {
-      if (!throttle) {
-        await prisma.adminLoginThrottle.create({
-          data: { identifierHash: key, failures: 1, windowStartedAt: now },
-        });
-      } else {
-        const failures = throttle.failures + 1;
-        await prisma.adminLoginThrottle.update({
-          where: { identifierHash: key },
-          data: {
-            failures,
-            blockedUntil: failures >= MAX_FAILURES ? new Date(now.getTime() + WINDOW_MS) : null,
+      const windowExpired =
+        !throttle || now.getTime() - throttle.windowStartedAt.getTime() >= WINDOW_MS;
+      const failures = windowExpired ? 1 : throttle.failures + 1;
+      const blockedUntil =
+        failures >= MAX_FAILURES ? new Date(now.getTime() + WINDOW_MS) : null;
+
+      // Upsert is atomic for a given unique HMAC key. Concurrent failures
+      // cannot overwrite one another's counter with a stale read.
+      const rows = await prisma.$queryRaw<Array<{ blockedUntil: Date | null }>>`
+        INSERT INTO "AdminLoginThrottle"
+          ("id", "identifierHash", "failures", "windowStartedAt", "blockedUntil", "updatedAt")
+        VALUES (
+          ${crypto.randomUUID()},
+          ${key},
+          1,
+          ${now},
+          NULL,
+          ${now}
+        )
+        ON CONFLICT ("identifierHash") DO UPDATE SET
+          "failures" = CASE
+            WHEN "AdminLoginThrottle"."blockedUntil" IS NOT NULL
+              AND "AdminLoginThrottle"."blockedUntil" > ${now}
+              THEN "AdminLoginThrottle"."failures"
+            WHEN "AdminLoginThrottle"."windowStartedAt" <= ${new Date(now.getTime() - WINDOW_MS)}
+              THEN 1
+            ELSE "AdminLoginThrottle"."failures" + 1
+          END,
+          "windowStartedAt" = CASE
+            WHEN "AdminLoginThrottle"."blockedUntil" IS NOT NULL
+              AND "AdminLoginThrottle"."blockedUntil" > ${now}
+              THEN "AdminLoginThrottle"."windowStartedAt"
+            WHEN "AdminLoginThrottle"."windowStartedAt" <= ${new Date(now.getTime() - WINDOW_MS)}
+              THEN ${now}
+            ELSE "AdminLoginThrottle"."windowStartedAt"
+          END,
+          "blockedUntil" = CASE
+            WHEN "AdminLoginThrottle"."blockedUntil" IS NOT NULL
+              AND "AdminLoginThrottle"."blockedUntil" > ${now}
+              THEN "AdminLoginThrottle"."blockedUntil"
+            WHEN "AdminLoginThrottle"."windowStartedAt" <= ${new Date(now.getTime() - WINDOW_MS)}
+              THEN NULL
+            WHEN "AdminLoginThrottle"."failures" + 1 >= ${MAX_FAILURES}
+              THEN ${new Date(now.getTime() + WINDOW_MS)}
+            ELSE NULL
+          END,
+          "updatedAt" = ${now}
+        RETURNING "blockedUntil"
+      `;
+
+      const activeBlock = rows[0]?.blockedUntil;
+      if (activeBlock && activeBlock > now) {
+        return NextResponse.json(
+          { error: "Too many unsuccessful attempts. Try again later." },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": String(
+                Math.max(1, Math.ceil((activeBlock.getTime() - now.getTime()) / 1000)),
+              ),
+            },
           },
-        });
+        );
       }
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
