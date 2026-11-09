@@ -34,7 +34,8 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 - [x] Add searchable admin user directory with audited suspend/restore actions and session revocation.
 - [x] Add a protected contribution review queue with validate, return-for-correction, reject, and duplicate decisions.
 - [x] Record administrator login, moderation, and account-status changes in the admin audit log.
-- [x] Show recent administrator activity on the overview; a searchable full audit-log browser remains planned.
+- [x] Show recent administrator activity on the overview and provide a searchable, read-only audit-log browser.
+- [x] Provide admin-only audio playback through short-lived signed URLs and audit playback URL issuance.
 
 ## Phase 3 — Dataset operations
 
@@ -55,6 +56,7 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 
 - [ ] Add durable background jobs for audio, exports, and indexing.
 - [ ] Add monitoring, alerting, backups, and restore drills.
+- [ ] Verify audio object lifecycle, storage CORS, and retention/deletion policy before accepting production recordings.
 - [ ] Add advanced roles and scoped permissions when workflows require them.
 - [ ] Evaluate mobile/offline synchronization and external integrations.
 
