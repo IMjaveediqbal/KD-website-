@@ -26,7 +26,8 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 - [ ] Add server-protected account layouts and consistent loading/error states.
 - [x] Keep the user dashboard and contribution API scoped to the signed-in user's own records; show moderation feedback to that contributor.
 - [x] Add initial regression coverage for validation, same-origin security, Khowar text preservation, and concurrent database rate limiting.
-- [ ] Expand account lifecycle coverage with session, ownership, admin-boundary, and browser end-to-end tests.
+- [x] Add regression tests for active/expired/suspended user sessions, active/expired/revoked/disabled admin sessions, contribution ownership scoping, and editable-status policy.
+- [ ] Add route-level integration and browser end-to-end tests for account lifecycle, admin-boundary responses, and moderation audit transactions.
 
 ## Phase 2 — Secure administration
 
