@@ -100,6 +100,16 @@ A contribution may evolve into one or more curated domain records after review. 
 
 The accepted source-submission/curated-record boundary, revision model, provenance, consent evidence, and additive migration strategy are specified in [ADR 0003](../decisions/0003-source-and-curated-dataset-boundary.md).
 
+The first additive curated-data migration now establishes these PostgreSQL boundaries:
+
+- `CuratedRecord` is the stable identity; `CuratedRevision` holds numbered editorial snapshots.
+- `LexicalEntryRevision` and `CorpusSentenceRevision` keep vocabulary and corpus fields typed rather than using a generic content table. Lexical meanings are separate `LexicalSense` rows.
+- `ContributionEvidence` is an explicit many-to-many link between source submissions and curated revisions. `SourceReference` and `RevisionSourceReference` preserve external provenance.
+- `ConsentEvent` records purpose-specific grant/revocation history and requires at least one subject (user, contribution, or audio item). The old profile consent booleans remain legacy fields and are not proof of consent for a particular asset or purpose.
+- `DatasetRelease` and `DatasetReleaseItem` identify exact revision IDs for a release snapshot. Publication workflows must enforce approval and immutability before production export is enabled.
+
+This migration is additive: it does not rewrite, rename, or backfill any existing `Contribution` or `AudioItem` rows. Do not run a schema push against a production database; use the reviewed migration and the database runbook.
+
 ## 5. Data integrity and language governance
 
 Every language record should be able to preserve:
