@@ -40,6 +40,36 @@ enum ContributionStatus {
   REVISION_PENDING
 }
 
+enum CuratedRecordKind {
+  LEXICAL_ENTRY
+  CORPUS_SENTENCE
+}
+
+enum CuratedRecordStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  ARCHIVED
+}
+
+enum ConsentPurpose {
+  AUDIO_RECORDING
+  RESEARCH
+  MODEL_TRAINING
+  DATASET_DISTRIBUTION
+}
+
+enum ConsentAction {
+  GRANTED
+  REVOKED
+}
+
+enum DatasetReleaseStatus {
+  DRAFT
+  PUBLISHED
+  WITHDRAWN
+}
+
 model User {
   id                String              @id @default(cuid())
   email             String              @unique
@@ -57,6 +87,7 @@ model User {
   validationRecords ValidationRecord[]
   sessions          Session[]
   auditLogs         AuditLog[]          @relation("AuditActor")
+  consentEvents     ConsentEvent[]
 }
 
 model AdminAccount {
@@ -70,6 +101,8 @@ model AdminAccount {
   updatedAt    DateTime      @updatedAt
   sessions     AdminSession[]
   auditLogs    AdminAuditLog[]
+  createdCuratedRevisions  CuratedRevision[] @relation("CuratedRevisionAuthor")
+  approvedCuratedRevisions CuratedRevision[] @relation("CuratedRevisionApprover")
 }
 
 model AdminSession {
@@ -166,6 +199,8 @@ model Contribution {
   updatedAt               DateTime            @updatedAt
   validationRecords       ValidationRecord[]
   audioItems              AudioItem[]
+  curatedEvidence         ContributionEvidence[]
+  consentEvents           ConsentEvent[]
   @@index([userId, type, status, createdAt])
   @@index([dialect, region])
   @@index([normalizedText])
@@ -182,6 +217,7 @@ model AudioItem {
   checksum        String?
   storageStatus   String       @default("PENDING")
   createdAt       DateTime     @default(now())
+  consentEvents   ConsentEvent[]
   @@index([contributionId])
 }
 
@@ -218,4 +254,168 @@ model AuthRateLimitBucket {
   windowStartedAt DateTime @default(now())
   blockedUntil    DateTime?
   updatedAt       DateTime @updatedAt
+}
+
+
+/// Stable identity for a curated lexical entry or corpus sentence.
+/// Typed, revision-specific content lives in the child revision models.
+model CuratedRecord {
+  id        String              @id @default(cuid())
+  kind      CuratedRecordKind
+  status    CuratedRecordStatus @default(DRAFT)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  revisions CuratedRevision[]
+  @@index([kind, status, updatedAt])
+}
+
+model CuratedRevision {
+  id               String         @id @default(cuid())
+  recordId         String
+  record           CuratedRecord  @relation(fields: [recordId], references: [id], onDelete: Restrict)
+  revisionNumber   Int
+  changeReason     String?
+  createdByAdminId String?
+  createdByAdmin   AdminAccount?  @relation("CuratedRevisionAuthor", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  approvedByAdminId String?
+  approvedByAdmin  AdminAccount?  @relation("CuratedRevisionApprover", fields: [approvedByAdminId], references: [id], onDelete: SetNull)
+  approvedAt       DateTime?
+  createdAt        DateTime       @default(now())
+  lexicalEntry     LexicalEntryRevision?
+  corpusSentence   CorpusSentenceRevision?
+  contributionEvidence ContributionEvidence[]
+  sourceEvidence   RevisionSourceReference[]
+  releaseItems     DatasetReleaseItem[]
+  @@unique([recordId, revisionNumber])
+  @@index([recordId, createdAt])
+  @@index([approvedAt])
+}
+
+model LexicalEntryRevision {
+  id                 String          @id @default(cuid())
+  revisionId         String          @unique
+  revision           CuratedRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  headword           String
+  normalizedHeadword String?
+  script             String?
+  languageCode       String?
+  dialect            String?
+  region             String?
+  senses             LexicalSense[]
+  @@index([normalizedHeadword])
+  @@index([dialect, region])
+}
+
+model LexicalSense {
+  id                     String               @id @default(cuid())
+  lexicalEntryRevisionId String
+  lexicalEntryRevision   LexicalEntryRevision @relation(fields: [lexicalEntryRevisionId], references: [id], onDelete: Restrict)
+  senseNumber            Int
+  meaningEnglish         String?
+  meaningUrdu            String?
+  meaningKhowar          String?
+  partOfSpeech           String?
+  usageNotes             String?
+  createdAt              DateTime             @default(now())
+  @@unique([lexicalEntryRevisionId, senseNumber])
+}
+
+model CorpusSentenceRevision {
+  id                String          @id @default(cuid())
+  revisionId        String          @unique
+  revision          CuratedRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  originalText      String
+  normalizedText    String?
+  transliteration   String?
+  englishTranslation String?
+  urduTranslation   String?
+  dialect           String?
+  region            String?
+  sourceContext     String?
+  @@index([normalizedText])
+  @@index([dialect, region])
+}
+
+/// Explicit many-to-many link: one submission can support multiple revisions,
+/// and each revision can cite multiple independent submissions.
+model ContributionEvidence {
+  id             String          @id @default(cuid())
+  revisionId     String
+  revision       CuratedRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  contributionId String
+  contribution   Contribution    @relation(fields: [contributionId], references: [id], onDelete: Restrict)
+  evidenceRole   String          @default("SUPPORTING")
+  notes          String?
+  createdAt      DateTime        @default(now())
+  @@unique([revisionId, contributionId])
+  @@index([contributionId])
+}
+
+/// Bibliographic, dictionary, archive, or other external source metadata.
+model SourceReference {
+  id               String   @id @default(cuid())
+  sourceType        String
+  title             String
+  attribution       String?
+  stableReference   String?
+  license           String?
+  notes             String?
+  createdAt         DateTime @default(now())
+  revisions         RevisionSourceReference[]
+  @@unique([sourceType, stableReference])
+}
+
+model RevisionSourceReference {
+  id                String          @id @default(cuid())
+  revisionId        String
+  revision          CuratedRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  sourceReferenceId String
+  sourceReference   SourceReference @relation(fields: [sourceReferenceId], references: [id], onDelete: Restrict)
+  locator           String?
+  notes             String?
+  @@unique([revisionId, sourceReferenceId])
+  @@index([sourceReferenceId])
+}
+
+/// Append-only consent evidence. A new REVOKED event supersedes a prior grant;
+/// never update a grant in place or infer consent from Profile booleans.
+model ConsentEvent {
+  id             String         @id @default(cuid())
+  userId         String?
+  user           User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  contributionId String?
+  contribution   Contribution?  @relation(fields: [contributionId], references: [id], onDelete: SetNull)
+  audioItemId    String?
+  audioItem      AudioItem?     @relation(fields: [audioItemId], references: [id], onDelete: SetNull)
+  purpose        ConsentPurpose
+  action         ConsentAction
+  scope          String
+  policyVersion  String
+  occurredAt     DateTime       @default(now())
+  @@index([userId, purpose, occurredAt])
+  @@index([contributionId, purpose, occurredAt])
+  @@index([audioItemId, purpose, occurredAt])
+}
+
+model DatasetRelease {
+  id            String               @id @default(cuid())
+  version       String               @unique
+  status        DatasetReleaseStatus @default(DRAFT)
+  schemaVersion String
+  manifest      Json?
+  checksum      String?
+  createdAt     DateTime             @default(now())
+  publishedAt   DateTime?
+  items         DatasetReleaseItem[]
+}
+
+model DatasetReleaseItem {
+  id         String          @id @default(cuid())
+  releaseId  String
+  release    DatasetRelease  @relation(fields: [releaseId], references: [id], onDelete: Restrict)
+  revisionId String
+  revision   CuratedRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  createdAt  DateTime        @default(now())
+  @@unique([releaseId, revisionId])
+  @@index([revisionId])
 }
