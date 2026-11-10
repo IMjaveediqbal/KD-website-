@@ -112,7 +112,7 @@ export async function createNextCuratedRevision(
   validateDraft(input);
 
   // Serialize revision-number allocation per record inside the caller's transaction.
-  await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${record.id}, 0))`;
+  await tx.$queryRaw`SELECT TRUE AS locked FROM (SELECT pg_advisory_xact_lock(hashtextextended(${record.id}, 0))) AS lock_result`;
   const latest = await tx.curatedRevision.aggregate({
     where: { recordId: record.id },
     _max: { revisionNumber: true },
