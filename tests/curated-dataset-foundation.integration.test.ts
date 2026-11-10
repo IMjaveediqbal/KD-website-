@@ -23,7 +23,7 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
       prisma.contribution.create({
         data: {
           clientId: `curated-${suffix}-${n}`,
-          userId,
+          userId: user.id,
           type: n === 1 ? "WORD" : "SENTENCE",
           originalText: n === 1 ? "Khowar source word" : "Khowar source sentence",
         },
