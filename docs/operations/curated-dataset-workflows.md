@@ -28,7 +28,8 @@ Approved revision content is not edited by these services. Editorial corrections
 - Consent purposes are separate: audio recording, research, model training, and dataset distribution.
 - `CuratedAudioAsset` points to an exact curated revision, can point back to its source `AudioItem`, and stores private object metadata (key, MIME type, size, duration, checksum, processing state).
 - Binary audio remains in private object storage. Never expose `storageKey` as a public URL. Existing admin playback authorization and short-lived signed URLs remain separate.
-- Before research use, model training, or distribution, a future consent-policy service must evaluate the latest applicable events for that exact asset and purpose. Do not infer asset permission from legacy `Profile` booleans.
+- `lib/consent-policy.ts` evaluates the latest event for an exact subject and purpose. It does not fall back from an asset to its source contribution or user profile; missing consent is denied. The caller must evaluate each required subject/purpose pair before processing or release.
+- Do not infer asset permission from legacy `Profile` booleans.
 
 ## Dataset releases
 
