@@ -111,6 +111,8 @@ The first additive curated-data migration now establishes these PostgreSQL bound
 
 This migration is additive: it does not rewrite, rename, or backfill any existing `Contribution` or `AudioItem` rows. Do not run a schema push against a production database; use the reviewed migration and the database runbook.
 
+The initial transactional service contract, approval/audit behavior, advisory-lock revision numbering, consent boundaries, and release-readiness caveats are documented in [Curated dataset workflows](../operations/curated-dataset-workflows.md).
+
 ## 5. Data integrity and language governance
 
 Every language record should be able to preserve:
