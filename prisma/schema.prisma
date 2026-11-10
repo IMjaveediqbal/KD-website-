@@ -293,6 +293,7 @@ model CuratedRevision {
   corpusSentence   CorpusSentenceRevision?
   contributionEvidence ContributionEvidence[]
   sourceEvidence   RevisionSourceReference[]
+  audioAssets      CuratedAudioAsset[]
   releaseItems     DatasetReleaseItem[]
   @@unique([recordId, revisionNumber])
   @@index([recordId, createdAt])
