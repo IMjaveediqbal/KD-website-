@@ -70,6 +70,13 @@ enum DatasetReleaseStatus {
   WITHDRAWN
 }
 
+enum CuratedAudioStatus {
+  PENDING
+  READY
+  QUARANTINED
+  DELETED
+}
+
 model User {
   id                String              @id @default(cuid())
   email             String              @unique
@@ -218,6 +225,7 @@ model AudioItem {
   storageStatus   String       @default("PENDING")
   createdAt       DateTime     @default(now())
   consentEvents   ConsentEvent[]
+  curatedAssets   CuratedAudioAsset[]
   @@index([contributionId])
 }
 
@@ -387,6 +395,8 @@ model ConsentEvent {
   contribution   Contribution?  @relation(fields: [contributionId], references: [id], onDelete: SetNull)
   audioItemId    String?
   audioItem      AudioItem?     @relation(fields: [audioItemId], references: [id], onDelete: SetNull)
+  curatedAudioAssetId String?
+  curatedAudioAsset   CuratedAudioAsset? @relation(fields: [curatedAudioAssetId], references: [id], onDelete: SetNull)
   purpose        ConsentPurpose
   action         ConsentAction
   scope          String
@@ -395,6 +405,7 @@ model ConsentEvent {
   @@index([userId, purpose, occurredAt])
   @@index([contributionId, purpose, occurredAt])
   @@index([audioItemId, purpose, occurredAt])
+  @@index([curatedAudioAssetId, purpose, occurredAt])
 }
 
 model DatasetRelease {
@@ -418,4 +429,24 @@ model DatasetReleaseItem {
   createdAt  DateTime        @default(now())
   @@unique([releaseId, revisionId])
   @@index([revisionId])
+}
+
+
+/// Private curated audio metadata. Binary content remains in private object storage.
+model CuratedAudioAsset {
+  id               String            @id @default(cuid())
+  revisionId       String
+  revision         CuratedRevision   @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  sourceAudioItemId String?
+  sourceAudioItem  AudioItem?        @relation(fields: [sourceAudioItemId], references: [id], onDelete: SetNull)
+  storageKey       String            @unique
+  mimeType         String
+  durationSeconds  Int?
+  sizeBytes        BigInt?
+  checksum         String?
+  status           CuratedAudioStatus @default(PENDING)
+  createdAt        DateTime          @default(now())
+  consentEvents    ConsentEvent[]
+  @@index([revisionId, status])
+  @@index([sourceAudioItemId])
 }
