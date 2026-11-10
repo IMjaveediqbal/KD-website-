@@ -56,6 +56,7 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 - [x] Separate original source submissions from curated records with explicit many-to-many evidence links.
 - [ ] Implement the complete draft, submit, review, correction, validation, and archive workflows (initial draft creation and revision approval services are in place).
 - [x] Add the initial provenance, licensing, purpose-specific consent-event, and numbered revision data structures.
+- [x] Add exact-subject, purpose-specific consent evaluation with deny-by-default behavior and no fallback to profile-level consent.
 - [ ] Add deduplication and broader data-quality checks.
 
 ## Phase 4 — Search, releases, and research access
