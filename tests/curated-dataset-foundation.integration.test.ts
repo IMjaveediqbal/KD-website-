@@ -12,6 +12,7 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
   let revisionIds: string[] = [];
   let contributionIds: string[] = [];
   let releaseId: string | undefined;
+  let sourceReferenceId: string | undefined;
 
   try {
     const user = await prisma.user.create({
@@ -93,6 +94,24 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
       2,
     );
 
+    const sourceReference = await prisma.sourceReference.create({
+      data: {
+        sourceType: "DICTIONARY",
+        title: "Test dictionary source",
+        attribution: "Test source attribution",
+        stableReference: `dictionary-${suffix}`,
+        license: "Test-only licence",
+      },
+    });
+    sourceReferenceId = sourceReference.id;
+    await prisma.revisionSourceReference.create({
+      data: {
+        revisionId: lexicalRevision.id,
+        sourceReferenceId: sourceReference.id,
+        locator: "page 12, entry 4",
+      },
+    });
+
     await prisma.consentEvent.createMany({
       data: [
         {
@@ -132,6 +151,16 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
         where: { contributionId: contributions[0].id, purpose: "RESEARCH", action: "GRANTED" },
       }),
       1,
+    );
+    await assert.rejects(
+      prisma.consentEvent.create({
+        data: {
+          purpose: "RESEARCH",
+          action: "GRANTED",
+          scope: "Missing subject must be rejected",
+          policyVersion: "consent-v1",
+        },
+      }),
     );
 
     const release = await prisma.datasetRelease.create({
@@ -173,6 +202,9 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
     }
     if (recordIds.length) {
       await prisma.curatedRecord.deleteMany({ where: { id: { in: recordIds } } });
+    }
+    if (sourceReferenceId) {
+      await prisma.sourceReference.deleteMany({ where: { id: sourceReferenceId } });
     }
     if (contributionIds.length) {
       await prisma.consentEvent.deleteMany({ where: { contributionId: { in: contributionIds } } });
