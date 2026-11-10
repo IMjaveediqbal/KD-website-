@@ -51,6 +51,7 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 ## Phase 3 — Dataset operations
 
 - [x] Decide the source-submission versus curated-record boundary, immutable revision approach, provenance/consent evidence, and additive migration strategy (ADR 0003).
+- [x] Add the first additive PostgreSQL schema and migration for curated lexical/corpus revisions, contribution/source provenance, purpose-specific consent events, and release revision snapshots; preserve existing contribution/audio rows.
 - [ ] Establish canonical vocabulary, corpus, and audio domain models.
 - [ ] Separate original submissions from curated records.
 - [ ] Implement draft, submit, review, correction, validation, and archive workflows.
