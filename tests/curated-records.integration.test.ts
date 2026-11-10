@@ -89,6 +89,30 @@ test("curated services approve complete revisions and create new revisions witho
     assert.equal(previous.headword, "initial-headword");
     assert.equal(latest.headword, "corrected-headword");
 
+    const concurrentResults = await Promise.all([1, 2].map((n) =>
+      prisma.$transaction((tx) =>
+        createNextCuratedRevision(tx, {
+          recordId: initial.draft.record.id,
+          kind: "LEXICAL_ENTRY",
+          createdByAdminId: admin.id,
+          changeReason: `Concurrent editorial revision ${n}`,
+          content: {
+            headword: `concurrent-headword-${n}`,
+            senses: [{ senseNumber: 1, meaningEnglish: `meaning ${n}` }],
+          },
+        }),
+      ),
+    ));
+    for (const result of concurrentResults) {
+      assert.equal(result.kind, "created");
+      if (result.kind === "created") revisionIds.push(result.revision.id);
+    }
+    const concurrentNumbers = concurrentResults
+      .filter((result) => result.kind === "created")
+      .map((result) => result.revision.revisionNumber)
+      .sort((a, b) => a - b);
+    assert.deepEqual(concurrentNumbers, [3, 4]);
+
     const record = await prisma.curatedRecord.findUniqueOrThrow({ where: { id: recordId } });
     assert.equal(record.status, "IN_REVIEW");
   } finally {
