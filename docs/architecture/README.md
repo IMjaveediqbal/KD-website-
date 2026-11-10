@@ -106,6 +106,7 @@ The first additive curated-data migration now establishes these PostgreSQL bound
 - `LexicalEntryRevision` and `CorpusSentenceRevision` keep vocabulary and corpus fields typed rather than using a generic content table. Lexical meanings are separate `LexicalSense` rows.
 - `ContributionEvidence` is an explicit many-to-many link between source submissions and curated revisions. `SourceReference` and `RevisionSourceReference` preserve external provenance.
 - `ConsentEvent` records purpose-specific grant/revocation history and requires at least one subject (user, contribution, or audio item). The old profile consent booleans remain legacy fields and are not proof of consent for a particular asset or purpose.
+- `CuratedAudioAsset` stores private object metadata against an exact curated revision, optionally links back to the original `AudioItem`, and has its own purpose-specific consent history. It stores no public object URL; playback authorization remains a separate admin/storage concern.
 - `DatasetRelease` and `DatasetReleaseItem` identify exact revision IDs for a release snapshot. Publication workflows must enforce approval and immutability before production export is enabled.
 
 This migration is additive: it does not rewrite, rename, or backfill any existing `Contribution` or `AudioItem` rows. Do not run a schema push against a production database; use the reviewed migration and the database runbook.
