@@ -160,8 +160,12 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
     if (revisionIds.length) {
       await prisma.contributionEvidence.deleteMany({ where: { revisionId: { in: revisionIds } } });
       await prisma.revisionSourceReference.deleteMany({ where: { revisionId: { in: revisionIds } } });
+      const lexicalEntries = await prisma.lexicalEntryRevision.findMany({
+        where: { revisionId: { in: revisionIds } },
+        select: { id: true },
+      });
       await prisma.lexicalSense.deleteMany({
-        where: { lexicalEntryRevision: { revision: { id: { in: revisionIds } } } },
+        where: { lexicalEntryRevisionId: { in: lexicalEntries.map((entry) => entry.id) } },
       });
       await prisma.lexicalEntryRevision.deleteMany({ where: { revisionId: { in: revisionIds } } });
       await prisma.corpusSentenceRevision.deleteMany({ where: { revisionId: { in: revisionIds } } });
