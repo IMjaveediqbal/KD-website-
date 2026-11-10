@@ -13,6 +13,8 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
   let contributionIds: string[] = [];
   let releaseId: string | undefined;
   let sourceReferenceId: string | undefined;
+  let sourceAudioItemId: string | undefined;
+  let curatedAudioAssetId: string | undefined;
 
   try {
     const user = await prisma.user.create({
@@ -77,6 +79,26 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
     });
     revisionIds = [lexicalRevision.id, sentenceRevision.id];
 
+    const sourceAudio = await prisma.audioItem.create({
+      data: {
+        contributionId: contributions[1].id,
+        storageKey: `source-audio/${suffix}.wav`,
+        mimeType: "audio/wav",
+        checksum: "test-checksum",
+      },
+    });
+    sourceAudioItemId = sourceAudio.id;
+    const curatedAudio = await prisma.curatedAudioAsset.create({
+      data: {
+        revisionId: sentenceRevision.id,
+        sourceAudioItemId: sourceAudio.id,
+        storageKey: `curated-audio/${suffix}.wav`,
+        mimeType: "audio/wav",
+        status: "READY",
+      },
+    });
+    curatedAudioAssetId = curatedAudio.id;
+
     await prisma.contributionEvidence.createMany({
       data: [
         { revisionId: lexicalRevision.id, contributionId: contributions[0].id },
@@ -116,6 +138,22 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
       data: [
         {
           userId,
+          curatedAudioAssetId: curatedAudio.id,
+          purpose: "AUDIO_RECORDING",
+          action: "GRANTED",
+          scope: "This curated recording may be stored for the dataset",
+          policyVersion: "audio-consent-v1",
+        },
+        {
+          userId,
+          curatedAudioAssetId: curatedAudio.id,
+          purpose: "AUDIO_RECORDING",
+          action: "REVOKED",
+          scope: "Permission for this curated recording withdrawn",
+          policyVersion: "audio-consent-v1",
+        },
+        {
+          userId,
           contributionId: contributions[0].id,
           purpose: "AUDIO_RECORDING",
           action: "GRANTED",
@@ -143,6 +181,12 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
     assert.equal(
       await prisma.consentEvent.count({
         where: { contributionId: contributions[0].id, purpose: "AUDIO_RECORDING" },
+      }),
+      2,
+    );
+    assert.equal(
+      await prisma.consentEvent.count({
+        where: { curatedAudioAssetId: curatedAudio.id, purpose: "AUDIO_RECORDING" },
       }),
       2,
     );
@@ -186,6 +230,22 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
       await prisma.datasetReleaseItem.deleteMany({ where: { releaseId } });
       await prisma.datasetRelease.deleteMany({ where: { id: releaseId } });
     }
+    if (contributionIds.length || curatedAudioAssetId) {
+      await prisma.consentEvent.deleteMany({
+        where: {
+          OR: [
+            ...(contributionIds.length ? [{ contributionId: { in: contributionIds } }] : []),
+            ...(curatedAudioAssetId ? [{ curatedAudioAssetId }] : []),
+          ],
+        },
+      });
+    }
+    if (curatedAudioAssetId) {
+      await prisma.curatedAudioAsset.deleteMany({ where: { id: curatedAudioAssetId } });
+    }
+    if (sourceAudioItemId) {
+      await prisma.audioItem.deleteMany({ where: { id: sourceAudioItemId } });
+    }
     if (revisionIds.length) {
       await prisma.contributionEvidence.deleteMany({ where: { revisionId: { in: revisionIds } } });
       await prisma.revisionSourceReference.deleteMany({ where: { revisionId: { in: revisionIds } } });
@@ -207,7 +267,6 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
       await prisma.sourceReference.deleteMany({ where: { id: sourceReferenceId } });
     }
     if (contributionIds.length) {
-      await prisma.consentEvent.deleteMany({ where: { contributionId: { in: contributionIds } } });
       await prisma.contribution.deleteMany({ where: { id: { in: contributionIds } } });
     }
     if (userId) {
