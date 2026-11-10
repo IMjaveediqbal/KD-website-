@@ -52,11 +52,11 @@ The roadmap is ordered to protect data integrity and avoid building disconnected
 
 - [x] Decide the source-submission versus curated-record boundary, immutable revision approach, provenance/consent evidence, and additive migration strategy (ADR 0003).
 - [x] Add the first additive PostgreSQL schema and migration for curated lexical/corpus revisions, contribution/source provenance, purpose-specific consent events, and release revision snapshots; preserve existing contribution/audio rows.
-- [ ] Establish canonical vocabulary, corpus, and audio domain models.
-- [ ] Separate original submissions from curated records.
-- [ ] Implement draft, submit, review, correction, validation, and archive workflows.
-- [ ] Add provenance, licensing, consent, and revision history.
-- [ ] Add deduplication and data-quality checks.
+- [x] Establish the initial typed vocabulary, corpus, and private curated-audio domain models.
+- [x] Separate original source submissions from curated records with explicit many-to-many evidence links.
+- [ ] Implement the complete draft, submit, review, correction, validation, and archive workflows (initial draft creation and revision approval services are in place).
+- [x] Add the initial provenance, licensing, purpose-specific consent-event, and numbered revision data structures.
+- [ ] Add deduplication and broader data-quality checks.
 
 ## Phase 4 — Search, releases, and research access
 
