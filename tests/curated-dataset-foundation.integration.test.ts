@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { prisma } from "../lib/prisma";
+import { getConsentDecision } from "../lib/consent-policy";
 
 const shouldRun = process.env.RUN_DB_TESTS === "true";
 
@@ -134,6 +135,8 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
       },
     });
 
+    const consentGrantedAt = new Date(Date.now() - 2_000);
+    const consentRevokedAt = new Date(Date.now() - 1_000);
     await prisma.consentEvent.createMany({
       data: [
         {
@@ -143,6 +146,7 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
           action: "GRANTED",
           scope: "This curated recording may be stored for the dataset",
           policyVersion: "audio-consent-v1",
+          occurredAt: consentGrantedAt,
         },
         {
           userId,
@@ -151,6 +155,7 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
           action: "REVOKED",
           scope: "Permission for this curated recording withdrawn",
           policyVersion: "audio-consent-v1",
+          occurredAt: consentRevokedAt,
         },
         {
           userId,
@@ -159,6 +164,7 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
           action: "GRANTED",
           scope: "This contribution's audio may be recorded",
           policyVersion: "consent-v1",
+          occurredAt: consentGrantedAt,
         },
         {
           userId,
@@ -167,6 +173,7 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
           action: "REVOKED",
           scope: "Recording permission withdrawn",
           policyVersion: "consent-v1",
+          occurredAt: consentRevokedAt,
         },
         {
           userId,
@@ -196,6 +203,26 @@ test("curated revisions preserve typed content, many-to-many provenance, consent
       }),
       1,
     );
+
+    const audioConsent = await getConsentDecision(prisma, {
+      subject: { kind: "CURATED_AUDIO_ASSET", id: curatedAudio.id },
+      purpose: "AUDIO_RECORDING",
+    });
+    assert.equal(audioConsent.allowed, false);
+    assert.equal(audioConsent.event?.action, "REVOKED");
+
+    const researchConsent = await getConsentDecision(prisma, {
+      subject: { kind: "CONTRIBUTION", id: contributions[0].id },
+      purpose: "RESEARCH",
+    });
+    assert.equal(researchConsent.allowed, true);
+
+    const modelTrainingConsent = await getConsentDecision(prisma, {
+      subject: { kind: "CURATED_AUDIO_ASSET", id: curatedAudio.id },
+      purpose: "MODEL_TRAINING",
+    });
+    assert.equal(modelTrainingConsent.allowed, false);
+
     await assert.rejects(
       prisma.consentEvent.create({
         data: {
