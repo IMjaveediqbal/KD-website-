@@ -40,6 +40,20 @@ type SentenceDraft = {
 
 export type CuratedDraftInput = LexicalDraft | SentenceDraft;
 
+function validateDraft(input: CuratedDraftInput) {
+  if (input.kind === "LEXICAL_ENTRY") {
+    if (!input.content.headword.trim()) throw new Error("A lexical headword is required.");
+    if (input.content.senses.length === 0) throw new Error("At least one lexical sense is required.");
+    const senseNumbers = input.content.senses.map((sense) => sense.senseNumber);
+    if (senseNumbers.some((number) => !Number.isInteger(number) || number < 1) ||
+        new Set(senseNumbers).size !== senseNumbers.length) {
+      throw new Error("Lexical sense numbers must be unique positive integers.");
+    }
+    return;
+  }
+  if (!input.content.originalText.trim()) throw new Error("Original corpus sentence text is required.");
+}
+
 function revisionContent(input: CuratedDraftInput) {
   if (input.kind === "LEXICAL_ENTRY") {
     return {
@@ -59,6 +73,7 @@ export async function createCuratedDraft(
   tx: Prisma.TransactionClient,
   input: CuratedDraftInput,
 ) {
+  validateDraft(input);
   const record = await tx.curatedRecord.create({
     data: { kind: input.kind, status: "DRAFT" },
     select: { id: true, kind: true, status: true },
@@ -94,7 +109,10 @@ export async function createNextCuratedRevision(
   if (!record) return { kind: "missing" };
   if (record.status === "ARCHIVED") return { kind: "archived" };
   if (record.kind !== input.kind) return { kind: "type_mismatch" };
+  validateDraft(input);
 
+  // Serialize revision-number allocation per record inside the caller's transaction.
+  await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${record.id}, 0))`;
   const latest = await tx.curatedRevision.aggregate({
     where: { recordId: record.id },
     _max: { revisionNumber: true },
@@ -133,8 +151,8 @@ export async function approveCuratedRevision(
     where: { id: input.revisionId },
     include: {
       record: { select: { id: true, kind: true, status: true } },
-      lexicalEntry: { select: { id: true } },
-      corpusSentence: { select: { id: true } },
+      lexicalEntry: { select: { id: true, _count: { select: { senses: true } } } },
+      corpusSentence: { select: { id: true, originalText: true } },
     },
   });
   if (!revision) return { kind: "missing" };
@@ -143,8 +161,8 @@ export async function approveCuratedRevision(
 
   const hasValidContent =
     revision.record.kind === "LEXICAL_ENTRY"
-      ? Boolean(revision.lexicalEntry)
-      : Boolean(revision.corpusSentence);
+      ? Boolean(revision.lexicalEntry && revision.lexicalEntry._count.senses > 0)
+      : Boolean(revision.corpusSentence?.originalText.trim());
   if (!hasValidContent) return { kind: "invalid_content" };
 
   const updated = await tx.curatedRevision.updateMany({
